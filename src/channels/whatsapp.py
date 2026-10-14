@@ -31,6 +31,8 @@ Media download (2 steps, TBV)
 
 from __future__ import annotations
 
+import hmac
+
 from core.types import InboundEvent, Outbound
 
 
@@ -47,7 +49,14 @@ class WhatsAppChannel:
 
     def handshake(self, query: dict) -> str | None:
         """GET verification. Return hub.challenge if mode and token match, else None."""
-        raise NotImplementedError("Owner B, Milestone 1")
+        if not self.verify_token:                       # (a)
+            return None
+        if query.get("hub.mode") != "subscribe":        # (b)
+            return None
+        given = query.get("hub.verify_token", "")       # (c)
+        if not hmac.compare_digest(given.encode(), self.verify_token.encode()):  # (d)
+            return None
+        return query.get("hub.challenge")               # (e)
 
     def verify(self, headers: dict, raw_body: bytes, query: dict) -> bool:
         """Check x-hub-signature-256 with hmac.compare_digest. Headers are lowercase."""
