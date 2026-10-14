@@ -1,0 +1,50 @@
+erDiagram
+  USER ||--o{ LINK : "parent has 1-2"
+  USER ||--o{ PENDING_CHECK : "parent starts"
+  PENDING_CHECK ||--o| ALERT : "STOP or PAID creates"
+  USER ||--o{ PAIRING_CODE : "child creates"
+  REPORT_KEY ||--o{ REPORT : "collects"
+  USER {
+    string partition_key "USER:channel:id"
+    string role "parent | child | second"
+    string lang "ms | en"
+    string address_as "Mak, Ayah..."
+    datetime consent_at
+  }
+  LINK {
+    string partition_key "USER:parent"
+    string sort_key "LINK:PRIMARY | LINK:SECONDARY"
+    string contact_id
+    string status "active | removed"
+    datetime consent_at
+  }
+  PAIRING_CODE {
+    string partition_key "PAIR:code"
+    string owner_id
+    string target_role
+    int ttl "24 h"
+  }
+  PENDING_CHECK {
+    string partition_key "USER:parent"
+    string sort_key "CHECK:ulid"
+    string status "decoding | decoded | failed | answered"
+    string claim "OFFICIAL | COURIER | KNOWN_PERSON"
+    json decode_result "no image"
+    int ttl "15 min"
+  }
+  ALERT {
+    string partition_key "ALERT:check_id"
+    string stage "PRIMARY_SENT | SECONDARY_SENT | ACKED | UNACKED"
+    string type "STOP | PAID"
+    string acked_by
+    int ttl "7 days"
+  }
+  REPORT_KEY {
+    string key "HMAC of network_id + sub01 + sub02"
+  }
+  REPORT {
+    string partition_key "REPORT:report_key"
+    string sort_key "REP:reporter_hash"
+    string reason "scam_pattern | dispute | other"
+    datetime created_at
+  }

@@ -1,0 +1,34 @@
+erDiagram
+  PERSON ||--o{ FAMILY_LINK : "parent has 1 to 2"
+  PERSON ||--o{ QR_CHECK : "parent makes"
+  QR_CHECK ||--o| FAMILY_ALERT : "may start"
+  QR_ACCOUNT ||--o{ QR_REPORT : "receives"
+  PERSON {
+    text messaging_id "phone number or chat id"
+    text role "parent, primary, second"
+    text language "BM or English"
+    text address_as "e.g. Mak"
+    time consent_time "parent only"
+  }
+  FAMILY_LINK {
+    text contact_type "primary or second"
+    text status "active or removed"
+  }
+  QR_CHECK {
+    text claim "who asked to pay"
+    text qr_type "payment, link, other, unreadable"
+    text payee_name "kept 15 minutes"
+    text amount "if present"
+    text verdict "STOP or VERIFY"
+  }
+  FAMILY_ALERT {
+    text alert_type "STOP or PAID"
+    text stage "primary, second, handled, not handled"
+  }
+  QR_ACCOUNT {
+    text scrambled_id "cannot be reversed"
+  }
+  QR_REPORT {
+    text reason "scam pattern, dispute, other"
+    time report_time
+  }

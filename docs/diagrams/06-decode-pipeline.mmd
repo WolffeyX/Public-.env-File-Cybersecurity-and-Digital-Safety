@@ -1,0 +1,25 @@
+flowchart TD
+  A["Image bytes<br/>(in memory only)"] --> B{"Valid image?<br/>size OK?"}
+  B -- no --> X1["kind = unreadable"]
+  B -- yes --> C["Pillow: fix rotation,<br/>grayscale, cap size"]
+  C --> D["zxing-cpp decode"]
+  D -- found --> P["payload string"]
+  D -- nothing --> F["Retry: upscale x2 +<br/>contrast boost"]
+  F -- found --> P
+  F -- nothing --> X2["kind = no_qr"]
+  P --> G{"starts with<br/>http:// or https://?"}
+  G -- yes --> X3["kind = url"]
+  G -- no --> H{"starts with 0002<br/>and TLV parses?"}
+  H -- no --> X4["kind = other_text<br/>(e.g. Setel / Grab<br/>customer code)"]
+  H -- yes --> J{"tag 26 sub 00 =<br/>A0000006150001?"}
+  J -- no --> X5["kind = payment_other_emv"]
+  J -- yes --> K["kind = payment_duitnow"]
+  K --> L["Read fields:<br/>01 static/dynamic, 52 MCC,<br/>54 amount, 59 name, CRC"]
+  L --> M{"MCC = 0000?"}
+  M -- yes --> N1["is_personal = True"]
+  M -- "real MCC" --> N2["is_personal = False"]
+  M -- missing --> N3["is_personal = None"]
+  L --> R{"static QR?"}
+  R -- yes --> S["report_key = HMAC(pepper,<br/>network_id | sub01 | sub02)"]
+  R -- no --> T["report_key = None"]
+  X1 & X2 & X3 & X4 & X5 & N1 & N2 & N3 & S & T --> Z["DecodeResult saved<br/>image discarded"]

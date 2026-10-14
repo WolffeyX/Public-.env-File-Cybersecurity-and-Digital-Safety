@@ -1,0 +1,23 @@
+sequenceDiagram
+  autonumber
+  actor C as Adult child
+  actor P as Parent
+  participant B as Semak Dulu bot
+  participant D as DynamoDB
+  Note over C,P: During a visit home (about 2 minutes)
+  C->>B: "Daftar"
+  B->>C: Choose language [BM] [English]
+  B->>C: How should I address your parent? (Mak / Ayah / ...)
+  C->>B: "Mak"
+  B->>D: save child profile + pairing code (24 h)
+  B->>C: Your code: K7Q2M9. Ask Mak to send it to me.
+  P->>B: "K7Q2M9"
+  B->>D: look up code
+  B->>P: If I see a scam, I will also message your child. [Setuju]
+  P->>B: taps Setuju
+  B->>D: save primary link + consent time
+  B->>C: Mak is now linked ✅
+  B->>P: Let's practise: forward this test QR to me
+  P->>B: forwards test QR
+  B->>P: [DEMO] example verdict, nothing was paid
+  Note over C,P: Family code word agreed out loud<br/>(never stored)

@@ -1,0 +1,91 @@
+# English message catalogue (Owner C). Same keys and {variables} as ms.yaml.
+
+# --- Setup ---------------------------------------------------------------
+s.choose_lang: "Semak Dulu 🛡️\nPilih bahasa / Choose language:"
+s.welcome: "Hi! I'm Semak Dulu. I help you check a QR code before you pay.\nI am not a bank, the police or a government agency. I only give advice.\nChildren: type DAFTAR to start. Parents: send the code from your child, or forward a QR code picture to me."
+s.ask_address: "What should I call your parent? Type one word, for example: Mak, Ayah, Mum."
+s.pair_code: "Your code: {code}\nAsk {address_as} to send this code to me within 24 hours.\nTip: agree a family code word in person. I will never ask for it."
+s.code_invalid: "This code does not work. Ask your family member to send you a new code."
+s.consent: "{address_as}, if I see signs of a scam, I will tell your child straight away.\nI only keep phone numbers and family links. QR pictures are not kept.\nType BERHENTI at any time to delete your data."
+s.linked_parent: "Thank you, {address_as}. You are now linked with your child."
+s.linked_child: "{address_as} is now linked ✅ I will tell you if I see signs of a scam."
+s.practice_invite: "Let's try once. Forward any QR code picture to me. This is practice only, no money is sent."
+s.second_code: "Code for a second family member: {code}\nAsk them to send this code to me within 24 hours."
+s.second_exists: "{address_as} already has a second family member. Only one is allowed."
+s.second_invite: "You are invited as the second family member for {address_as}. I will tell you if the main child does not answer an alert."
+s.second_linked: "You are now the second family member for {address_as} ✅"
+s.second_linked_primary: "A second family member has been added for {address_as} ✅"
+s.not_primary: "Only the child who registered can add a second family member."
+s.lang_changed: "Language changed to English."
+s.default_address: "you"
+
+# --- Help and stop -------------------------------------------------------
+h.help: "Forward a QR code picture to me before you pay.\nCommands: DAFTAR (child), TAMBAH (second member), LANGUAGE, BERHENTI."
+h.stop_confirm: "Are you sure you want to stop? All your data and family links will be deleted."
+h.stopped: "Your data has been deleted. Thank you for using Semak Dulu."
+h.contact_left: "A family member has stopped using Semak Dulu. Their link with you has been deleted."
+h.rate_limited: "Too many checks in a short time. Please wait 10 minutes. Do not pay yet."
+
+# --- QR check -------------------------------------------------------------
+q.who_asked: "Thank you. Before you pay:\nWho asked {address_as} to pay?"
+q.reminder: "Do not pay yet. Choose who asked for the payment:"
+q.expired: "This check has expired. Please forward the QR code picture again."
+
+v.stop.official: "🛑 DO NOT PAY.\nBanks, the police and courts do not ask for payment by QR code.\nHang up now."
+v.stop.courier_personal: "🛑 DO NOT PAY.\nThe caller says courier, but this account is in a personal name: {payee_name}.\nHang up now."
+v.verify.courier: "🟡 Wait, do not pay yet.\nName on the QR: {payee_name}\nCheck this payment in the courier company's official app."
+v.verify.courier_unreadable: "🟡 Wait, do not pay yet.\nWe could not check this QR code.\nCheck this payment in the courier company's official app."
+v.verify.known_person: "🟡 Wait, do not pay yet.\nName on the QR: {payee_name}\nCall the person back on a number {address_as} already saved, and ask the family code word."
+v.told_contact: "I have told {address_as}'s child. They will call soon."
+v.amount: "Amount on the QR: RM{amount}"
+v.unknown_name: "(no name)"
+v.practice_prefix: "[PRACTICE] This is an example only. No alert was sent."
+v.semak_mule: "You can also check the account on the PDRM Semak Mule website."
+
+e.no_qr: "We could not find a QR code in this picture. If needed, send a clearer picture."
+e.unreadable: "We could not read this picture. Take the photo straight on, in good light."
+e.url: "This QR code opens a website, not a payment. Do not open it and do not enter any bank details."
+e.unknown_scheme: "We cannot check this type of QR code."
+
+ev.none: "No reports found, but that doesn't mean it is safe."
+ev.few: "This account has {n} unconfirmed reports. Be careful."
+ev.many: "Several people have reported this account."
+
+p.paid: "Do this now, in order:\n1. Call your bank immediately.\n2. Call 997 (National Scam Response Centre).\n3. Call 999 if you are in danger.\n4. Make a police report.\nI have told {address_as}'s child."
+
+# --- Reports ---------------------------------------------------------------
+r.choose_reason: "Why do you want to report this QR?\n1. The caller pretended to be a bank, police, court or courier\n2. The seller or person was dishonest\n3. Other"
+r.thanks: "Thank you. Your report helps other people."
+r.not_reportable: "Sorry, this type of QR code cannot be reported."
+r.already_reported: "You have already reported this QR."
+
+# --- Family alerts -----------------------------------------------------------
+a.child.stop: "⚠️ ALERT: Call {address_as} now.\n{address_as} just sent a QR code to check. The caller claimed to be from {claim_label}. {qr_desc}\nWe do not know if money was sent.\nAsk the family code word. If they paid: contact the bank and 997 now."
+a.child.paid: "⚠️ ALERT: Call {address_as} now.\n{address_as} told us money HAS been sent. The caller claimed to be from {claim_label}.\nHelp {address_as} contact the bank and 997 now, then make a police report."
+a.qr_personal: "The receiving account is a personal account."
+a.qr_business: "The receiving account is a business account."
+a.qr_unreadable: "The QR code could not be read."
+a.ack_done: "Thank you. The alert is marked as being handled."
+a.ack_other: "Another family member is handling the alert for {address_as}."
+a.parent.unacked: "{address_as}'s child has not answered yet. Do not pay. Call your bank and 997 now."
+
+c.OFFICIAL: "a bank, the police or a court"
+c.COURIER: "a courier"
+c.KNOWN_PERSON: "a relative, friend or shop"
+c.unknown: "an unknown party"
+
+# --- Button labels (max 20 characters) ----------------------------------------
+btn.lang_ms: "Bahasa Melayu"
+btn.lang_en: "English"
+btn.agree: "I agree"
+btn.accept: "Accept"
+btn.claim_official: "Bank/Police/Court"
+btn.claim_courier: "Courier"
+btn.claim_known: "Relative/Friend/Shop"
+btn.paid: "I already paid"
+btn.report: "Report this QR"
+btn.r_scam: "1. Impersonation"
+btn.r_dispute: "2. Dishonest"
+btn.r_other: "3. Other"
+btn.ack: "I'm handling it"
+btn.stop_confirm: "Yes, delete data"

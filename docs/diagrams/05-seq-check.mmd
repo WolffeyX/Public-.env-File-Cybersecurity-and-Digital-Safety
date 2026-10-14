@@ -1,0 +1,35 @@
+sequenceDiagram
+  autonumber
+  actor P as Parent
+  participant CH as WhatsApp / Telegram
+  participant I as Ingest Lambda
+  participant Q as SQS FIFO
+  participant W as Worker Lambda
+  participant D as DynamoDB
+  participant T as SQS timers
+  actor C as Adult child
+  P->>CH: forwards QR image
+  CH->>I: webhook (signed)
+  I->>I: verify signature, normalise
+  I->>Q: enqueue (group = parent)
+  I-->>CH: 200 OK (fast)
+  Q->>W: image event
+  W->>D: create PENDING_CHECK (decoding)
+  W->>CH: "Siapa minta bayar?" [Bank/Polis/Mahkamah] [Kurier] [Saudara/Kawan/Kedai]
+  CH->>P: question appears
+  W->>Q: enqueue "decode" job (same group)
+  Q->>W: decode job
+  W->>CH: download image
+  W->>W: decode QR + classify (image then discarded)
+  W->>D: save decode_result (decoded / failed)
+  P->>CH: taps "Bank/Polis/Mahkamah"
+  CH->>I: webhook
+  I->>Q: enqueue (same group → waits until decode is done)
+  Q->>W: button event
+  W->>D: read check, run verdict rules
+  W->>CH: STOP: "Jangan bayar. Letak telefon..."
+  CH->>P: verdict
+  W->>D: create ALERT (PRIMARY_SENT)
+  W->>CH: "AMARAN: Telefon Mak sekarang..." [Saya uruskan]
+  CH->>C: alert
+  W->>T: schedule escalation check (+180 s)

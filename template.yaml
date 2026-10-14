@@ -1,0 +1,183 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Semak Dulu - WhatsApp QR scam check bot (SDD section 2)
+
+# NO DOCKER NEEDED.
+# 1. Build the layer once:   scripts/build_layer.sh   (Windows: scripts\build_layer.ps1)
+# 2. sam build
+# 3. sam deploy --guided     (first time; later just `sam deploy`)
+# Do NOT use `sam build --use-container` or `sam local ...` (both need Docker).
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [x86_64]          # must match the layer wheels (manylinux x86_64)
+    MemorySize: 1024                 # more memory = faster CPU for QR decoding
+    Environment:
+      Variables:
+        STAGE: !Ref Stage
+        SSM_PREFIX: !Sub /semak/${Stage}
+        TABLE_NAME: !Ref Table
+        EVENTS_QUEUE_URL: !Ref EventsQueue
+        TIMERS_QUEUE_URL: !Ref TimersQueue
+
+Resources:
+  # ---------------------------------------------------------------- layer
+  DepsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub semak-deps-${Stage}
+      Description: zxing-cpp, Pillow, PyYAML, httpx (built by scripts/build_layer.sh)
+      ContentUri: layer/build/        # contains python/... ; no BuildMethod = uploaded as is
+      CompatibleRuntimes: [python3.12]
+      CompatibleArchitectures: [x86_64]
+
+  # ---------------------------------------------------------------- API
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+
+  # ---------------------------------------------------------------- functions
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub semak-ingest-${Stage}
+      CodeUri: src/
+      Handler: handlers.ingest.handler
+      Timeout: 10
+      MemorySize: 256
+      Layers: [!Ref DepsLayer]
+      Policies:
+        - SQSSendMessagePolicy: {QueueName: !GetAtt EventsQueue.QueueName}
+        - SSMParameterReadPolicy: {ParameterName: !Sub "semak/${Stage}*"}
+      Events:
+        WaGet:  {Type: HttpApi, Properties: {ApiId: !Ref HttpApi, Path: /wa, Method: GET}}
+        WaPost: {Type: HttpApi, Properties: {ApiId: !Ref HttpApi, Path: /wa, Method: POST}}
+        TgPost: {Type: HttpApi, Properties: {ApiId: !Ref HttpApi, Path: /tg, Method: POST}}
+
+  WorkerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub semak-worker-${Stage}
+      CodeUri: src/
+      Handler: handlers.worker.handler
+      Timeout: 30
+      Layers: [!Ref DepsLayer]
+      Policies:
+        - DynamoDBCrudPolicy: {TableName: !Ref Table}
+        - SQSSendMessagePolicy: {QueueName: !GetAtt EventsQueue.QueueName}
+        - SQSSendMessagePolicy: {QueueName: !GetAtt TimersQueue.QueueName}
+        - SSMParameterReadPolicy: {ParameterName: !Sub "semak/${Stage}*"}
+      Events:
+        FromEvents:
+          Type: SQS
+          Properties: {Queue: !GetAtt EventsQueue.Arn, BatchSize: 1}
+        FromTimers:
+          Type: SQS
+          Properties: {Queue: !GetAtt TimersQueue.Arn, BatchSize: 1}
+
+  # ---------------------------------------------------------------- queues
+  EventsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub semak-events-${Stage}.fifo
+      FifoQueue: true
+      VisibilityTimeout: 60          # > worker timeout (30 s)
+      RedrivePolicy: {deadLetterTargetArn: !GetAtt EventsDLQ.Arn, maxReceiveCount: 3}
+
+  EventsDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub semak-events-dlq-${Stage}.fifo
+      FifoQueue: true
+      MessageRetentionPeriod: 1209600
+
+  TimersQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub semak-timers-${Stage}
+      VisibilityTimeout: 60
+      RedrivePolicy: {deadLetterTargetArn: !GetAtt TimersDLQ.Arn, maxReceiveCount: 3}
+
+  TimersDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub semak-timers-dlq-${Stage}
+      MessageRetentionPeriod: 1209600
+
+  # ---------------------------------------------------------------- table
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub semak-${Stage}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: PK, AttributeType: S}
+        - {AttributeName: SK, AttributeType: S}
+        - {AttributeName: GSI1PK, AttributeType: S}
+        - {AttributeName: GSI1SK, AttributeType: S}
+      KeySchema:
+        - {AttributeName: PK, KeyType: HASH}
+        - {AttributeName: SK, KeyType: RANGE}
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - {AttributeName: GSI1PK, KeyType: HASH}
+            - {AttributeName: GSI1SK, KeyType: RANGE}
+          Projection: {ProjectionType: ALL}
+      TimeToLiveSpecification: {AttributeName: ttl, Enabled: true}
+
+  # ---------------------------------------------------------------- logs and alarms
+  IngestLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/semak-ingest-${Stage}
+      RetentionInDays: 14            # DR-09
+
+  WorkerLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/semak-worker-${Stage}
+      RetentionInDays: 14
+
+  WorkerErrorMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref WorkerLogs
+      FilterPattern: '{ $.event = "worker.error" }'
+      MetricTransformations:
+        - MetricNamespace: SemakDulu
+          MetricName: !Sub WorkerErrors-${Stage}
+          MetricValue: "1"
+
+  WorkerErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub semak-worker-errors-${Stage}
+      Namespace: SemakDulu
+      MetricName: !Sub WorkerErrors-${Stage}
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+Outputs:
+  WebhookWhatsApp:
+    Description: Paste into Meta > WhatsApp > Configuration > Callback URL
+    Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/wa
+  WebhookTelegram:
+    Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/tg
+  TableName:
+    Value: !Ref Table

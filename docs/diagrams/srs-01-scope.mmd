@@ -1,0 +1,23 @@
+flowchart LR
+  subgraph Users["Users"]
+    P["Parent<br/>(senior, 50+)"]
+    C["Primary contact<br/>(adult child)"]
+    S["Second contact<br/>(optional)"]
+  end
+  subgraph Product["Product boundary: Semak Dulu"]
+    F1["Setup and linking"]
+    F2["QR check and verdict"]
+    F3["Family alerts"]
+    F4["QR reports"]
+  end
+  WA["WhatsApp<br/>(main channel)"]
+  TG["Telegram<br/>(fallback channel)"]
+  SM["Semak Mule website<br/>(link only)"]
+  BK["Bank hotline, 997, 999<br/>(named in messages only)"]
+  P <--> WA
+  C <--> WA
+  S <--> WA
+  WA <-- "messages, images,<br/>button taps" --> Product
+  TG <-. "same data, if WhatsApp<br/>is unavailable" .-> Product
+  Product -. "shows link" .-> SM
+  Product -. "tells user to call" .-> BK

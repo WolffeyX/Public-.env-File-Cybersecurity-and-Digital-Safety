@@ -1,0 +1,7 @@
+# Local development and tests (Python 3.12 virtual environment).
+-r layer/requirements.txt
+boto3
+pytest
+moto[dynamodb,sqs]
+segno          # generates QR images for decode tests
+cfn-lint       # checks template.yaml

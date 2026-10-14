@@ -1,0 +1,15 @@
+flowchart TD
+  A(["Parent forwards a QR image"]) --> B["Bot asks: 'Who asked you to pay?'<br/>3 buttons"]
+  B --> C{"Parent taps<br/>within 2 minutes?"}
+  C -- no --> R["Bot sends reminder:<br/>'Don't pay yet, choose who asked'"]
+  R --> C2{"Taps within<br/>10 minutes?"}
+  C2 -- no --> X(["Check closes.<br/>Later taps get 'please forward again'"])
+  C2 -- yes --> D
+  C -- yes --> D{"Bot decides verdict<br/>(see rules table)"}
+  D -- STOP --> E["🛑 'Don't pay' + reason + action<br/>+ 'your child has been told'"]
+  E --> AL(["Family alert starts (FR-18)"])
+  D -- VERIFY --> F["🟡 'Not sure, don't pay yet'<br/>+ one check to do"]
+  E & F --> G{"Parent taps a<br/>follow-up button?"}
+  G -- "Saya sudah bayar" --> H["Call bank now, then 997,<br/>999 if in danger, then police report<br/>+ urgent family alert"]
+  G -- "Laporkan QR ini" --> I["Choose reason →<br/>report saved or refused"]
+  G -- none --> J(["End"])

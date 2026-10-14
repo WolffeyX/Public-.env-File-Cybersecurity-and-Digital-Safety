@@ -1,0 +1,5 @@
+# Runtime libraries for the Lambda layer (boto3 is already in the Lambda runtime).
+zxing-cpp==2.2.0
+Pillow==12.2.0
+PyYAML==6.0.3
+httpx==0.28.1

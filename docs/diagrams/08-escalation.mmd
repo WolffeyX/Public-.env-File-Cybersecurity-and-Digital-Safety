@@ -1,0 +1,15 @@
+stateDiagram-v2
+  [*] --> PRIMARY_SENT: STOP or PAID verdict<br/>(parent told first)
+  PRIMARY_SENT --> ACKED: child taps "Saya uruskan"
+  PRIMARY_SENT --> SECONDARY_SENT: +180 s, no ack,<br/>second contact exists
+  PRIMARY_SENT --> UNACKED: +180 s, no ack,<br/>no second contact
+  SECONDARY_SENT --> ACKED: either contact taps<br/>"Saya uruskan"
+  SECONDARY_SENT --> UNACKED: +180 s, no ack
+  UNACKED --> [*]: parent re-told to call<br/>bank / 997
+  ACKED --> [*]: chain stops,<br/>nobody else pinged
+  note right of PRIMARY_SENT
+    Every move is a conditional
+    DynamoDB update, so a late
+    timer or a double tap does nothing.
+    Cap: two contacts.
+  end note

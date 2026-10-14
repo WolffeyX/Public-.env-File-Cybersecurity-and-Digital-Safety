@@ -1,0 +1,14 @@
+flowchart TD
+  S["Parent taps an answer"] --> A{"Which answer?"}
+  A -- "Bank / Polis / Mahkamah" --> R1["🛑 STOP (R1)<br/>no decode needed"]
+  A -- "Kurier" --> W2{"Decode result<br/>(always ready: same<br/>FIFO group)"}
+  A -- "Saudara/Kawan/Kedai" --> R5["🟡 VERIFY (R5)<br/>show payee name,<br/>call back + code word"]
+  W2 -- "is_personal = True" --> R2["🛑 STOP (R2)<br/>'courier, but personal account'"]
+  W2 -- "failed / no QR" --> R3["🟡 VERIFY (R3)<br/>'could not read QR'"]
+  W2 -- "business or unknown" --> R4["🟡 VERIFY (R4)"]
+  R1 & R2 --> AL["Tell parent: don't pay,<br/>child will call<br/>→ start child alert"]
+  R3 & R4 & R5 --> EV["Add report wording<br/>(0 / 1-2 / 3+ reporters)<br/>level never changes"]
+  AL --> EV
+  EV --> OUT["Send verdict + one action<br/>+ buttons: [Saya sudah bayar] [Laporkan QR ini]"]
+  NOTE["There is no SAFE result.<br/>The code has no SAFE value."]:::note
+  classDef note fill:#fff3cd,stroke:#d4a017,color:#333

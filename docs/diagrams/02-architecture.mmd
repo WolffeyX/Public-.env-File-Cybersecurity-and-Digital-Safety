@@ -1,0 +1,28 @@
+flowchart LR
+  subgraph Channels["Messaging channels"]
+    WA["WhatsApp Cloud API"]
+    TG["Telegram Bot API"]
+  end
+  subgraph AWS["AWS (one SAM stack)"]
+    GW["API Gateway<br/>HTTP API<br/>/wa  /tg"]
+    ING["Ingest Lambda<br/>(zip, small)<br/>verify → normalise → enqueue"]
+    QF[("SQS FIFO<br/>events<br/>group = user")]
+    DLQ[("Dead-letter<br/>queue")]
+    QT[("SQS standard<br/>timers<br/>(delayed)")]
+    WRK["Worker Lambda<br/>(zip + QR layer)<br/>core logic + QR decode"]
+    DDB[("DynamoDB<br/>single table<br/>TTL on")]
+    SSM["SSM Parameter Store<br/>tokens, secrets, pepper"]
+    CW["CloudWatch<br/>logs + alarms"]
+  end
+  WA -- webhook --> GW
+  TG -- webhook --> GW
+  GW --> ING --> QF --> WRK
+  QF -. "3 failures" .-> DLQ
+  WRK -- "schedule reminder /<br/>escalation" --> QT --> WRK
+  WRK <--> DDB
+  WRK -- "send reply,<br/>download image" --> WA
+  WRK -- "send reply,<br/>download image" --> TG
+  SSM -.-> ING
+  SSM -.-> WRK
+  WRK -.-> CW
+  ING -.-> CW

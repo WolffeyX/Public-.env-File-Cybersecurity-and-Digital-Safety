@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.aws-sam/
+layer/build/
+samconfig.toml
+.env
+*.ipynb_checkpoints
+# never commit real QR images or payloads (SDD 9.2)
+tests/fixtures/real/

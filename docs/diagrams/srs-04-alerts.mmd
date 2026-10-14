@@ -1,0 +1,9 @@
+stateDiagram-v2
+  [*] --> Primary: STOP or "already paid"<br/>(parent told first)
+  Primary --> Handled: primary contact taps<br/>"Saya uruskan"
+  Primary --> Secondary: 180 s pass, nobody tapped,<br/>second contact exists
+  Primary --> NotHandled: 180 s pass, nobody tapped,<br/>no second contact
+  Secondary --> Handled: either contact taps<br/>"Saya uruskan"
+  Secondary --> NotHandled: 180 s pass,<br/>nobody tapped
+  NotHandled --> [*]: parent reminded to<br/>call bank and 997
+  Handled --> [*]: no further alerts

@@ -1,0 +1,25 @@
+digraph UC {
+  rankdir=LR; splines=true; nodesep=0.25; ranksep=1.1;
+  node [fontname="Arial", fontsize=13];
+  edge [arrowhead=none, color="#555555"];
+  P [label="Parent\n(senior, 50+)", shape=box, style="rounded,filled", fillcolor="#fde2e4"];
+  C [label="Primary contact\n(adult child)", shape=box, style="rounded,filled", fillcolor="#e2ecfd"];
+  S [label="Second contact\n(optional)", shape=box, style="rounded,filled", fillcolor="#e2ecfd"];
+  subgraph cluster_sys {
+    label="Semak Dulu"; fontname="Arial Bold"; fontsize=15; style="rounded"; color="#888888";
+    node [shape=ellipse, style=filled, fillcolor="#f3f0ff", color="#7a6ad8"];
+    U2  [label="UC-2 Link to child\nand give consent"];
+    U5  [label="UC-5 Do practice check"];
+    U6  [label="UC-6 Check a QR\nbefore paying"];
+    U7  [label="UC-7 Report a QR"];
+    U8  [label="UC-8 Tell the bot\n\"I already paid\""];
+    U4  [label="UC-4 Choose language"];
+    U10 [label="UC-10 Stop using\nthe service"];
+    U1  [label="UC-1 Register and get\npairing code"];
+    U3  [label="UC-3 Add second contact"];
+    U9  [label="UC-9 Receive and\nhandle an alert"];
+  }
+  P -> {U2 U5 U6 U7 U8 U4 U10};
+  {U1 U3 U4 U9 U10} -> C;
+  {U9 U10} -> S;
+}
