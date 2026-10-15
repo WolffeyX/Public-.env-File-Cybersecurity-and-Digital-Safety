@@ -31,6 +31,7 @@ Media download (2 steps, TBV)
 
 from __future__ import annotations
 
+import hashlib
 import hmac
 
 from core.types import InboundEvent, Outbound
@@ -60,7 +61,13 @@ class WhatsAppChannel:
 
     def verify(self, headers: dict, raw_body: bytes, query: dict) -> bool:
         """Check x-hub-signature-256 with hmac.compare_digest. Headers are lowercase."""
-        raise NotImplementedError("Owner B, Milestone 2")
+        if not self.app_secret:                                    # (a)
+            return False
+        header = headers.get("x-hub-signature-256", "")            # (b)
+        if not header.startswith("sha256="):                       # (c)
+            return False
+        expected = hmac.new(self.app_secret.encode(), raw_body, hashlib.sha256).hexdigest()  # (d)
+        return hmac.compare_digest(header.removeprefix("sha256="), expected)                # (e)
 
     def parse(self, raw_body: bytes) -> list[InboundEvent]:
         """Webhook JSON -> InboundEvents. user_id = make_user_id("wa", msg["from"])."""
