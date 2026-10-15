@@ -124,7 +124,8 @@ def test_s9_paid_button_alerts_the_child_urgently():
     clock, store, deps = setup()
     check_id, _ = check_and_claim(clock, store, deps, "personal", "KNOWN_PERSON")
     out = tap(clock, store, deps, MAK, f"paid:yes:{check_id}")
-    assert messages_to(out, MAK)[0].text == render("p.paid", "ms", address_as="Mak")
+    assert messages_to(out, MAK)[0].text == (
+    render("p.paid", "ms") + "\n" + render("v.told_contact", "ms", address_as="Mak"))
     assert messages_to(out, CHILD)[0].text == render(
         "a.child.paid", "ms", address_as="Mak", claim_label=render("c.KNOWN_PERSON", "ms"))
     assert tasks_in(out)[0].task == "escalate"
@@ -294,3 +295,22 @@ def test_report_after_the_check_expired_says_expired():
     clock.advance(901)
     out = tap(clock, store, deps, MAK, f"report:open:{check_id}")
     assert out[0].text == render("q.expired", "ms")
+
+def test_paid_message_does_not_claim_the_child_was_told_when_nobody_was():
+    clock, store, deps = setup()
+    store.delete_link(MAK, Role.PRIMARY)              # Mak has no linked contact
+    check_id, _ = check_and_claim(clock, store, deps, "personal", "KNOWN_PERSON")
+    out = tap(clock, store, deps, MAK, f"paid:yes:{check_id}")
+    assert messages_to(out, MAK)[0].text == render("p.paid", "ms")
+    assert messages_to(out, CHILD) == [] and tasks_in(out) == []
+
+
+def test_paid_on_a_practice_check_says_nothing_about_telling_the_child():
+    clock, store, deps = setup()
+    user = store.get_user(MAK)
+    user.practice_pending = True
+    store.put_user(user)
+    check_id, _ = check_and_claim(clock, store, deps, "personal", "KNOWN_PERSON")
+    out = tap(clock, store, deps, MAK, f"paid:yes:{check_id}")
+    assert messages_to(out, MAK)[0].text == render("p.paid", "ms")
+    assert messages_to(out, CHILD) == []

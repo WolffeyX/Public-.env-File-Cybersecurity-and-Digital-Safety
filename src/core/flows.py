@@ -448,13 +448,19 @@ def on_paid(user: User, check_id: str, store: Store, deps: Deps):
     """The parent says they already paid: bank, 997, 999, police + alert the family (FR-13)."""
     lang = lang_of(user)
     now = deps.now()
-    out: list[Outbound | Task] = [send(user.user_id, "p.paid", lang, address_as=addr(user))]
     check = store.get_check(user.user_id, check_id, now)
     if check is None or check.expires_at <= now:
         # The check data is deleted after 15 minutes (DR-02), but the parent says money
         # was sent, so the family must still be told. Use a bare stand-in check.
         check = Check(check_id=check_id, parent_id=user.user_id,
                       status=CheckStatus.ANSWERED, created_at=now, expires_at=now)
+    has_primary = any(l.contact_type == Role.PRIMARY for l in store.get_links(user.user_id))
+    alerting = has_primary and not check.is_practice
+
+    text = render("p.paid", lang)
+    if alerting:                       # only say it when it is true
+        text += "\n" + render("v.told_contact", lang, address_as=addr(user))
+    out: list[Outbound | Task] = [Outbound(to=user.user_id, text=text)]
     if not check.is_practice:
         out += escalation.start_alert(check, AlertType.PAID, store, deps)
     return out

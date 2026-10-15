@@ -51,7 +51,7 @@ ev.none: "No reports found, but that doesn't mean it is safe."
 ev.few: "This account has {n} unconfirmed reports. Be careful."
 ev.many: "Several people have reported this account."
 
-p.paid: "Do this now, in order:\n1. Call your bank immediately.\n2. Call 997 (National Scam Response Centre).\n3. Call 999 if you are in danger.\n4. Make a police report.\nI have told {address_as}'s child."
+p.paid: "Do this now, in order:\n1. Call your bank immediately.\n2. Call 997 (National Scam Response Centre).\n3. Call 999 if you are in danger.\n4. Make a police report."
 
 # --- Reports ---------------------------------------------------------------
 r.choose_reason: "Why do you want to report this QR?\n1. The caller pretended to be a bank, police, court or courier\n2. The seller or person was dishonest\n3. Other"
@@ -61,7 +61,7 @@ r.already_reported: "You have already reported this QR."
 
 # --- Family alerts -----------------------------------------------------------
 a.child.stop: "⚠️ ALERT: Call {address_as} now.\n{address_as} just sent a QR code to check. The caller claimed to be from {claim_label}. {qr_desc}\nWe do not know if money was sent.\nAsk the family code word. If they paid: contact the bank and 997 now."
-a.child.paid: "⚠️ ALERT: Call {address_as} now.\n{address_as} told us money HAS been sent. The caller claimed to be from {claim_label}.\nHelp {address_as} contact the bank and 997 now, then make a police report."
+a.child.paid: "⚠️ ALERT: Call {address_as} now.\n{address_as} told us money HAS been sent. The caller claimed to be from {claim_label}.\nAsk the family code word.\nHelp {address_as} contact the bank and 997 now, then make a police report."
 a.qr_personal: "The receiving account is a personal account."
 a.qr_business: "The receiving account is a business account."
 a.qr_unreadable: "The QR code could not be read."
