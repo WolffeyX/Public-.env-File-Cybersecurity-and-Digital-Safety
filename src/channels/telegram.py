@@ -21,7 +21,7 @@ import time
 
 import httpx
 
-from channels.base import make_user_id
+from channels.base import make_user_id, split_user_id
 from core.types import InboundEvent, Outbound
 
 
@@ -77,7 +77,24 @@ class TelegramChannel:
         return f"https://api.telegram.org/bot{self.token}/{method}"
 
     def send(self, msg: Outbound) -> None:
-        raise NotImplementedError
+        """sendMessage; buttons become an inline keyboard, one button per row."""
+        _, chat_id = split_user_id(msg.to)
+        payload = {"chat_id": chat_id, "text": msg.text}
+        if msg.buttons:
+            payload["reply_markup"] = {"inline_keyboard": [
+                [{"text": b.label, "callback_data": b.id}] for b in msg.buttons   # (a)
+            ]}
+        r = httpx.post(self._api("sendMessage"), json=payload, timeout=10)
+        if r.status_code >= 400:
+            raise RuntimeError(f"telegram send failed: HTTP {r.status_code}")      # (b)
 
     def fetch_media(self, media_ref: str) -> bytes:
-        raise NotImplementedError
+        """getFile -> file_path -> download. Bytes stay in memory only."""
+        meta = httpx.get(self._api("getFile"), params={"file_id": media_ref}, timeout=10)
+        if meta.status_code >= 400:
+            raise RuntimeError(f"telegram getFile failed: HTTP {meta.status_code}")
+        path = meta.json()["result"]["file_path"]
+        img = httpx.get(f"https://api.telegram.org/file/bot{self.token}/{path}", timeout=10)
+        if img.status_code >= 400:
+            raise RuntimeError(f"telegram download failed: HTTP {img.status_code}")
+        return img.content
