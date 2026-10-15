@@ -30,7 +30,8 @@ def _make_qr(
     """Build a synthetic DuitNow-style QR payload."""
     account_info = (
         _tlv("00", DUITNOW_ID)
-        + _tlv("01", account)
+        + _tlv("01", "123456")
+        + _tlv("02", account)
     )
 
     fields = [
