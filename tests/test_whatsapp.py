@@ -2,7 +2,11 @@
 import json
 import hashlib
 import hmac
+import httpx
+import pytest
+
 from channels.whatsapp import WhatsAppChannel
+from core.types import Button, Outbound
 
 
 def make_channel(verify_token="rahsia-ujian"):
@@ -150,3 +154,57 @@ def test_parse_handles_several_messages_in_one_webhook():
 
 def test_parse_bad_json_returns_empty_list():
     assert make_channel().parse(b"not json") == []
+
+# ---------------------------------------------------------------- send
+
+class FakeGraph:
+    """Stands in for httpx.post: records each call and answers with `status`."""
+
+    def __init__(self):
+        self.calls = []
+        self.status = 200
+
+    def post(self, url, json=None, headers=None, timeout=None):
+        self.calls.append({"url": url, "json": json, "headers": headers, "timeout": timeout})
+        return httpx.Response(self.status)
+
+
+@pytest.fixture
+def graph(monkeypatch):
+    """Replace httpx.post so no real request leaves the laptop."""
+    fake = FakeGraph()
+    monkeypatch.setattr(httpx, "post", fake.post)
+    return fake
+
+
+def test_send_plain_text(graph):
+    make_channel().send(Outbound(to="wa:60123456789", text="Hai!"))
+    [call] = graph.calls
+    assert call["url"] == "https://graph.facebook.com/v21.0/123/messages"
+    assert call["headers"] == {"Authorization": "Bearer t"}
+    assert call["timeout"] == 10
+    assert call["json"] == {"messaging_product": "whatsapp", "to": "60123456789",
+                            "type": "text", "text": {"body": "Hai!"}}
+
+
+def test_send_buttons_as_interactive_message(graph):
+    msg = Outbound(to="wa:60123456789", text="Pilih bahasa",
+                   buttons=[Button("lang:ms:-", "Bahasa Melayu"), Button("lang:en:-", "English")])
+    make_channel().send(msg)
+    body = graph.calls[0]["json"]
+    assert body["type"] == "interactive"
+    assert body["interactive"]["type"] == "button"
+    assert body["interactive"]["body"] == {"text": "Pilih bahasa"}
+    assert body["interactive"]["action"]["buttons"] == [
+        {"type": "reply", "reply": {"id": "lang:ms:-", "title": "Bahasa Melayu"}},
+        {"type": "reply", "reply": {"id": "lang:en:-", "title": "English"}},
+    ]
+
+
+def test_send_raises_on_http_error_without_leaking_details(graph):
+    graph.status = 401  # e.g. expired token
+    with pytest.raises(RuntimeError) as err:
+        make_channel().send(Outbound(to="wa:60123456789", text="rahsia"))
+    assert "401" in str(err.value)
+    assert "60123456789" not in str(err.value)   # DR-09: no phone number in logs
+    assert "rahsia" not in str(err.value)        # no message text in logs

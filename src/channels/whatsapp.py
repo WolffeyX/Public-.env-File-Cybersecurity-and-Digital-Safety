@@ -35,7 +35,9 @@ import hashlib
 import hmac
 import json 
 
-from channels.base import make_user_id 
+import httpx
+
+from channels.base import make_user_id, split_user_id
 from core.types import InboundEvent, Outbound
 
 
@@ -106,7 +108,29 @@ class WhatsAppChannel:
 
     def send(self, msg: Outbound) -> None:
         """Text if no buttons, interactive button message otherwise. Raise on HTTP error."""
-        raise NotImplementedError("Owner B, Milestone 2")
+        _, to = split_user_id(msg.to)                                   # (a)
+        if msg.buttons:
+            payload = {
+                "messaging_product": "whatsapp", "to": to, "type": "interactive",
+                "interactive": {
+                    "type": "button",
+                    "body": {"text": msg.text},
+                    "action": {"buttons": [
+                        {"type": "reply", "reply": {"id": b.id, "title": b.label[:20]}}   # (b)
+                        for b in msg.buttons[:3]
+                    ]},
+                },
+            }
+        else:
+            payload = {"messaging_product": "whatsapp", "to": to, "type": "text",
+                       "text": {"body": msg.text}}
+        url = f"https://graph.facebook.com/{self.api_version}/{self.phone_number_id}/messages"
+        r = httpx.post(url, json=payload, headers=self._auth(), timeout=10)      # (c)
+        if r.status_code >= 400:
+            raise RuntimeError(f"whatsapp send failed: HTTP {r.status_code}")   # (d)
+
+    def _auth(self) -> dict:
+        return {"Authorization": f"Bearer {self.token}"}                        # (e)
 
     def fetch_media(self, media_ref: str) -> bytes:
         raise NotImplementedError("Owner B, Milestone 2")
