@@ -33,7 +33,9 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json 
 
+from channels.base import make_user_id 
 from core.types import InboundEvent, Outbound
 
 
@@ -71,7 +73,36 @@ class WhatsAppChannel:
 
     def parse(self, raw_body: bytes) -> list[InboundEvent]:
         """Webhook JSON -> InboundEvents. user_id = make_user_id("wa", msg["from"])."""
-        raise NotImplementedError("Owner B, Milestone 2")
+        try:
+            data = json.loads(raw_body)                          # (a)
+        except ValueError:
+            return []
+        events: list[InboundEvent] = []
+        for entry in data.get("entry", []):                      # (b)
+            for change in entry.get("changes", []):
+                value = change.get("value", {})
+                for msg in value.get("messages", []):     # statuses[] are ignored  (c)
+                    ev = self._to_event(msg)
+                    if ev is not None:
+                        events.append(ev)
+        return events
+
+    def _to_event(self, msg: dict) -> InboundEvent | None:
+        """One WhatsApp message -> InboundEvent, or None for types we do not handle."""
+        common = dict(channel=self.name,                         # (d)
+                      user_id=make_user_id("wa", msg["from"]),
+                      msg_id=msg["id"],
+                      ts=float(msg.get("timestamp", 0)))
+        kind = msg.get("type")
+        if kind == "text":
+            return InboundEvent(kind="text", text=msg["text"]["body"], **common)
+        if kind == "image":
+            return InboundEvent(kind="image", media_ref=msg["image"]["id"], **common)
+        if kind == "interactive":
+            reply = msg["interactive"].get("button_reply")
+            if reply:
+                return InboundEvent(kind="button", button_id=reply["id"], **common)
+        return None                                              # (e)
 
     def send(self, msg: Outbound) -> None:
         """Text if no buttons, interactive button message otherwise. Raise on HTTP error."""
