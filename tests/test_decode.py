@@ -2,7 +2,7 @@ from io import BytesIO
 
 import segno
 from PIL import Image
-
+from types import SimpleNamespace
 from core.decode import UnreadableImage, decode_qr
 
 
@@ -90,3 +90,40 @@ def test_decode_exif_orientation():
     image.save(jpeg_buffer, format="JPEG", quality=95, exif=exif)
 
     assert decode_qr(jpeg_buffer.getvalue()) == expected
+
+
+def test_decode_large_image_qr():
+    expected = "SEM AK-DULU-LARGE"
+    qr = segno.make(expected, micro=False)
+    buffer = BytesIO()
+    qr.save(buffer, kind="png", scale=100)
+
+    # Enlarge the QR image so its longest side exceeds MAX_SIDE.
+    image = Image.open(BytesIO(buffer.getvalue())).convert("RGB")
+    large_image = image.resize((2500, 2500), Image.Resampling.NEAREST)
+
+    large_buffer = BytesIO()
+    large_image.save(large_buffer, format="PNG")
+
+    assert decode_qr(large_buffer.getvalue()) == expected
+
+
+def test_decode_retry_returns_text(monkeypatch):
+    expected = "SEM AK-DULU-RETRY"
+    image_bytes = make_qr_image(expected)
+    calls = []
+
+    def fake_read_barcodes(image, *, formats):
+        calls.append(image.size)
+        if len(calls) == 1:
+            return []  # First scan finds no QR.
+        return [SimpleNamespace(text=expected)]  # Retry succeeds.
+
+    monkeypatch.setattr(
+        "core.decode.zxingcpp.read_barcodes",
+        fake_read_barcodes,
+    )
+
+    assert decode_qr(image_bytes) == expected
+    assert len(calls) == 2
+    assert calls[1] == (calls[0][0] * 2, calls[0][1] * 2)

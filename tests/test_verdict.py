@@ -63,3 +63,22 @@ def test_evidence_message_id_thresholds():
     assert evidence_message_id(2) == "ev.few"
     assert evidence_message_id(3) == "ev.many"
     assert evidence_message_id(10) == "ev.many"
+
+
+def test_v3_courier_unreadable_qr_verifies():
+    decode = DecodeResult(kind=QrKind.NO_QR)
+    result = decide(Claim.COURIER, decode)
+
+    assert result.level == Level.VERIFY
+    assert result.rule == "V-3"
+    assert result.message_id == "v.verify.courier_unreadable"
+    assert result.notify_child is False
+
+
+def test_v3_courier_missing_decode_verifies():
+    result = decide(Claim.COURIER, None)
+
+    assert result.level == Level.VERIFY
+    assert result.rule == "V-3"
+    assert result.message_id == "v.verify.courier_unreadable"
+    assert result.notify_child is False

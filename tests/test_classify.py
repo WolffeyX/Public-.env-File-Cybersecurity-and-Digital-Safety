@@ -167,3 +167,66 @@ def test_decode_and_classify_unreadable_image():
     result = decode_and_classify(b"not an image", b"test-pepper")
 
     assert result.kind == QrKind.UNREADABLE
+
+
+def test_unknown_emv_format_indicator_is_other_text():
+    from core.emv import compute_crc
+
+    # Change the format indicator to an unrecognised value.
+    payload = PERSONAL_STATIC_1.replace("000201", "000203", 1)
+
+    # Recalculate the checksum after modifying the payload.
+    crc_input = payload[:-8] + "6304"
+    payload = crc_input + compute_crc(crc_input)
+
+    result = classify(payload, b"test-pepper")
+
+    assert result.kind == QrKind.OTHER_TEXT
+
+def test_missing_network_identifier_is_other_text():
+    from core.emv import compute_crc, parse_tlv
+
+    fields, error = parse_tlv(PERSONAL_STATIC_1)
+    assert error is None
+
+    rebuilt = []
+
+    for field in fields:
+        if field.tag == "63":
+            continue
+
+        value = field.value
+
+        if field.tag == "26":
+            nested, error = parse_tlv(value)
+            assert error is None
+
+            value = "".join(
+                f"{item.tag}{len(item.value):02d}{item.value}"
+                for item in nested
+                if item.tag != "00"
+            )
+
+        rebuilt.append(f"{field.tag}{len(value):02d}{value}")
+
+    crc_input = "".join(rebuilt) + "6304"
+    payload = crc_input + compute_crc(crc_input)
+
+    result = classify(payload, b"test-pepper")
+
+    assert result.kind == QrKind.OTHER_TEXT
+
+def test_invalid_mcc_is_not_guessed():
+    from core.emv import compute_crc
+
+    # Replace the valid MCC with four non-numeric characters.
+    payload = PERSONAL_STATIC_1.replace("52040000", "5204ABCD")
+
+    # Recalculate the checksum after modifying the payload.
+    crc_input = payload[:-8] + "6304"
+    payload = crc_input + compute_crc(crc_input)
+
+    result = classify(payload, b"test-pepper")
+
+    assert result.kind == QrKind.PAYMENT_DUITNOW
+    assert result.is_personal is None
