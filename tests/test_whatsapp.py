@@ -163,10 +163,15 @@ class FakeGraph:
     def __init__(self):
         self.calls = []
         self.status = 200
+        self.get_responses = []      # queued answers for httpx.get, in order
 
     def post(self, url, json=None, headers=None, timeout=None):
         self.calls.append({"url": url, "json": json, "headers": headers, "timeout": timeout})
         return httpx.Response(self.status)
+
+    def get(self, url, headers=None, timeout=None):
+        self.calls.append({"url": url, "headers": headers, "timeout": timeout})
+        return self.get_responses.pop(0)
 
 
 @pytest.fixture
@@ -174,6 +179,7 @@ def graph(monkeypatch):
     """Replace httpx.post so no real request leaves the laptop."""
     fake = FakeGraph()
     monkeypatch.setattr(httpx, "post", fake.post)
+    monkeypatch.setattr(httpx, "get", fake.get)
     return fake
 
 
@@ -208,3 +214,32 @@ def test_send_raises_on_http_error_without_leaking_details(graph):
     assert "401" in str(err.value)
     assert "60123456789" not in str(err.value)   # DR-09: no phone number in logs
     assert "rahsia" not in str(err.value)        # no message text in logs
+
+# ---------------------------------------------------------------- fetch_media
+
+def test_fetch_media_two_steps(graph):
+    graph.get_responses = [
+        httpx.Response(200, json={"url": "https://lookaside.example/abc", "mime_type": "image/jpeg"}),
+        httpx.Response(200, content=b"\xff\xd8fake-jpeg"),
+    ]
+    data = make_channel().fetch_media("MEDIA_ID_1")
+    assert data == b"\xff\xd8fake-jpeg"
+    first, second = graph.calls
+    assert first["url"] == "https://graph.facebook.com/v21.0/MEDIA_ID_1"
+    assert second["url"] == "https://lookaside.example/abc"
+    assert second["headers"] == {"Authorization": "Bearer t"}   # the download needs the token too
+
+
+def test_fetch_media_raises_when_lookup_fails(graph):
+    graph.get_responses = [httpx.Response(404)]
+    with pytest.raises(RuntimeError, match="404"):
+        make_channel().fetch_media("MEDIA_ID_1")
+
+
+def test_fetch_media_raises_when_download_fails(graph):
+    graph.get_responses = [
+        httpx.Response(200, json={"url": "https://lookaside.example/abc"}),
+        httpx.Response(403),
+    ]
+    with pytest.raises(RuntimeError, match="403"):
+        make_channel().fetch_media("MEDIA_ID_1")

@@ -133,4 +133,12 @@ class WhatsAppChannel:
         return {"Authorization": f"Bearer {self.token}"}                        # (e)
 
     def fetch_media(self, media_ref: str) -> bytes:
-        raise NotImplementedError("Owner B, Milestone 2")
+        """Two steps: media id -> short-lived URL -> image bytes. Bytes stay in memory only."""
+        meta = httpx.get(f"https://graph.facebook.com/{self.api_version}/{media_ref}",
+                         headers=self._auth(), timeout=10)                          # (a)
+        if meta.status_code >= 400:
+            raise RuntimeError(f"whatsapp media lookup failed: HTTP {meta.status_code}")
+        img = httpx.get(meta.json()["url"], headers=self._auth(), timeout=10)       # (b)
+        if img.status_code >= 400:
+            raise RuntimeError(f"whatsapp media download failed: HTTP {img.status_code}")
+        return img.content                                                          # (c)
