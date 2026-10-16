@@ -56,3 +56,32 @@ def test_verdict_and_alert_length(lang):
 def test_render_fails_loudly_on_missing_variable():
     with pytest.raises(KeyError):
         render("q.who_asked", "ms")
+
+SAMPLE_VALUES = {
+    "address_as": "Mak",
+    "payee_name": "KEDAI CONTOH SDN BHD",
+    "amount": "157.00",
+    "n": "3",
+    "claim_label": "kurier",
+    "qr_desc": "Akaun penerima ialah akaun peribadi.",
+}
+
+
+@pytest.mark.parametrize("lang", ["ms", "en"])
+def test_catalogue_messages_fit_ui_limits(lang):
+    messages = catalogue(lang)
+
+    for msg_id, template in messages.items():
+        params = {
+            name: SAMPLE_VALUES.get(name, "Contoh")
+            for name in variables(template)
+        }
+        message = render(msg_id, lang, **params)
+
+        assert len(message) <= 450, (
+            f"{lang}:{msg_id} exceeds 450 characters: {len(message)}"
+        )
+        assert len(message.splitlines()) <= 8, (
+            f"{lang}:{msg_id} exceeds 8 lines: "
+            f"{len(message.splitlines())}"
+        )

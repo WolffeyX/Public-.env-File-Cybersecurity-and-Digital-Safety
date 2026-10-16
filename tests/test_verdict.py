@@ -82,3 +82,22 @@ def test_v3_courier_missing_decode_verifies():
     assert result.rule == "V-3"
     assert result.message_id == "v.verify.courier_unreadable"
     assert result.notify_child is False
+
+def test_courier_personal_verdict_preserves_name_and_amount():
+    from core.types import Claim, DecodeResult, Level, QrKind
+    from core.verdict import decide
+
+    decoded = DecodeResult(
+        kind=QrKind.PAYMENT_DUITNOW,
+        is_personal=True,
+        payee_name="KEDAI CONTOH",
+        amount="157.00",
+    )
+
+    result = decide(Claim.COURIER, decoded)
+
+    assert result.level == Level.STOP
+    assert result.message_id == "v.stop.courier_personal"
+    assert result.params["payee_name"] == "KEDAI CONTOH"
+    assert result.params["amount"] == "157.00"
+    assert result.notify_child is True
