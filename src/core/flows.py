@@ -21,12 +21,13 @@ from __future__ import annotations
 import re
 import secrets
 
+from core import escalation, reports
 from core import verdict as verdict_rules
 from core.messages import DEFAULT_LANG, LANGS, label, render
 from core.types import (AlertType, Button, Check, CheckStatus, Claim,
                         DecodeResult, Deps, InboundEvent, Level, Link,
-                        Outbound, PairCode, QrKind, Role, Store, Task, User,
-                        Verdict)
+                        Outbound, PairCode, QrKind, ReportReason, Role, Store,
+                        Task, User, Verdict)
 
 REMINDER_AFTER_S = 120          # FR-24
 CLOSE_AFTER_S = 600             # FR-24
@@ -391,12 +392,6 @@ def evidence_id(n: int) -> str:
         return "ev.none" if n == 0 else ("ev.few" if n < SEVERAL else "ev.many")
 
 
-def start_alert(store: Store, deps: Deps, parent: User, check: Check,
-                alert_type: AlertType) -> list[Outbound | Task]:
-    """STUB. Milestone 3 fills this in (alert the family). Returns nothing for now."""
-    return []
-
-
 def on_claim(user: User, value: str, check_id: str, store: Store, deps: Deps):
     """The parent tapped who asked them to pay. Build ONE verdict message (FR-09..FR-12)."""
     lang = lang_of(user)
@@ -444,19 +439,51 @@ def on_claim(user: User, value: str, check_id: str, store: Store, deps: Deps):
         to=user.user_id, text="\n".join(lines),
         buttons=[btn(f"paid:yes:{check_id}", "btn.paid", lang),
                  btn(f"report:open:{check_id}", "btn.report", lang)])]
-    if alert_now:
-        out += start_alert(store, deps, user, check, AlertType.STOP)    # Milestone 3
+    if alert_now:                               # the parent's message goes out first (FR-19)
+        out += escalation.start_alert(check, AlertType.STOP, store, deps)
     return out
 
 
 def on_paid(user: User, check_id: str, store: Store, deps: Deps):
     """The parent says they already paid: bank, 997, 999, police + alert the family (FR-13)."""
     lang = lang_of(user)
-    out: list[Outbound | Task] = [send(user.user_id, "p.paid", lang, address_as=addr(user))]
-    check = store.get_check(user.user_id, check_id, deps.now())
-    if check is not None and not check.is_practice and store.get_links(user.user_id):
-        out += start_alert(store, deps, user, check, AlertType.PAID)    # Milestone 3
+    now = deps.now()
+    check = store.get_check(user.user_id, check_id, now)
+    if check is None or check.expires_at <= now:
+        # The check data is deleted after 15 minutes (DR-02), but the parent says money
+        # was sent, so the family must still be told. Use a bare stand-in check.
+        check = Check(check_id=check_id, parent_id=user.user_id,
+                      status=CheckStatus.ANSWERED, created_at=now, expires_at=now)
+    has_primary = any(l.contact_type == Role.PRIMARY for l in store.get_links(user.user_id))
+    alerting = has_primary and not check.is_practice
+
+    text = render("p.paid", lang)
+    if alerting:                       # only say it when it is true
+        text += "\n" + render("v.told_contact", lang, address_as=addr(user))
+    out: list[Outbound | Task] = [Outbound(to=user.user_id, text=text)]
+    if not check.is_practice:
+        out += escalation.start_alert(check, AlertType.PAID, store, deps)
     return out
+
+
+# ---------------------------------------------------------------------------
+# M3: reports
+# ---------------------------------------------------------------------------
+
+def on_report(user: User, value: str, check_id: str, store: Store, deps: Deps):
+    """"Laporkan QR ini" (value "open"), then the chosen reason (FR-14..FR-16)."""
+    lang = lang_of(user)
+    now = deps.now()
+    check = store.get_check(user.user_id, check_id, now)
+    if check is None or check.expires_at <= now:          # the QR details are gone (DR-02)
+        return [send(user.user_id, "q.expired", lang)]
+    if value == "open":
+        return reports.open_report(check, user.user_id, lang)
+    try:
+        reason = ReportReason(value)
+    except ValueError:
+        return []
+    return reports.submit_report(check, user.user_id, lang, reason, store, deps)
 
 
 # ---------------------------------------------------------------------------
@@ -526,7 +553,11 @@ def route_button(event, store, deps):
         return on_claim(user, value, ref, store, deps)
     if action == "paid":
         return on_paid(user, ref, store, deps)
-    return []          # report and ack come in Milestone 3
+    if action == "ack":
+        return escalation.on_ack(ref, event.user_id, store, deps)
+    if action == "report":
+        return on_report(user, value, ref, store, deps)
+    return []
 
 
 def route_task(event, store, deps):
@@ -537,4 +568,6 @@ def route_task(event, store, deps):
         return on_reminder(event, store, deps)
     if event.task == "close_check":
         return on_close_check(event, store, deps)
-    return []          # "escalate" comes in Milestone 3
+    if event.task == "escalate":
+        return escalation.on_escalate(event.ref, store, deps)
+    return []

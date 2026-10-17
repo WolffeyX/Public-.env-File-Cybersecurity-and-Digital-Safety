@@ -59,7 +59,7 @@ ev.none: "Tiada laporan dijumpai, tetapi itu tidak bermakna ia selamat."
 ev.few: "Akaun ini ada {n} laporan yang belum disahkan. Berhati-hati."
 ev.many: "Beberapa orang telah melaporkan akaun ini."
 
-p.paid: "Buat ini sekarang, ikut urutan:\n1. Telefon bank anda segera.\n2. Telefon 997 (Pusat Respons Scam Kebangsaan).\n3. Telefon 999 jika anda dalam bahaya.\n4. Buat laporan polis.\nSaya sudah maklumkan anak {address_as}."
+p.paid: "Buat ini sekarang, ikut urutan:\n1. Telefon bank anda segera.\n2. Telefon 997 (Pusat Respons Scam Kebangsaan).\n3. Telefon 999 jika anda dalam bahaya.\n4. Buat laporan polis."
 
 # --- Laporan ------------------------------------------------------------
 r.choose_reason: "Kenapa anda mahu laporkan QR ini?\n1. Pemanggil menyamar sebagai bank, polis, mahkamah atau kurier\n2. Penjual atau orang itu tidak jujur\n3. Lain-lain"
@@ -69,7 +69,7 @@ r.already_reported: "Anda sudah melaporkan QR ini sebelum ini."
 
 # --- Amaran keluarga ----------------------------------------------------
 a.child.stop: "⚠️ AMARAN: Telefon {address_as} sekarang.\n{address_as} baru hantar kod QR untuk disemak. Pemanggil mengaku dari {claim_label}. {qr_desc}\nKami tidak tahu sama ada wang sudah dihantar.\nTanya kod rahsia keluarga. Jika sudah bayar: hubungi bank dan 997 segera."
-a.child.paid: "⚠️ AMARAN: Telefon {address_as} sekarang.\n{address_as} beritahu kami wang SUDAH dihantar. Pemanggil mengaku dari {claim_label}.\nBantu {address_as} hubungi bank dan 997 segera, kemudian buat laporan polis."
+a.child.paid: "⚠️ AMARAN: Telefon {address_as} sekarang.\n{address_as} beritahu kami wang SUDAH dihantar. Pemanggil mengaku dari {claim_label}.\nTanya kod rahsia keluarga.\nBantu {address_as} hubungi bank dan 997 segera, kemudian buat laporan polis."
 a.qr_personal: "Akaun penerima ialah akaun peribadi."
 a.qr_business: "Akaun penerima ialah akaun perniagaan."
 a.qr_unreadable: "Kod QR tidak dapat dibaca."
