@@ -37,9 +37,11 @@ RATE_LIMIT = 10                 # NFR-SE-05: checks per 10 minutes
 RATE_WINDOW_S = 600
 SEVERAL = 3                     # distinct scam reports for the "several" wording (FR-15)
 COMMANDS = {
-    "daftar": "register", "tambah": "add_second",
+    "daftar": "register", "register": "register",
+    "tambah": "add_second", "add": "add_second",
     "bahasa": "language", "language": "language",
-    "berhenti": "stop", "bantuan": "help", "help": "help",
+    "berhenti": "stop", "stop": "stop",
+    "bantuan": "help", "help": "help",
 }
 
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"   # no 0/O/1/I (NFR-SE-06)
@@ -100,24 +102,27 @@ def lang_of_id(user_id: str, store: Store) -> str:
 # ---------------------------------------------------------------------------
 
 def first_contact(user_id: str) -> list[Outbound | Task]:
-    """Greeting for someone we have never seen: language buttons, then welcome (FR-04).
-    Uses BM, because nobody has chosen a language yet."""
+    """Greeting for someone we have never seen: language buttons only (FR-04).
+    The welcome comes after they pick a language, so it shows the right commands."""
     lang = DEFAULT_LANG
     return [
         send(user_id, "s.choose_lang", lang,
              [btn("lang:ms:-", "btn.lang_ms", lang),
               btn("lang:en:-", "btn.lang_en", lang)]),
-        send(user_id, "s.welcome", lang),
     ]
 
 
 def on_lang(user: User, value: str, store: Store) -> list[Outbound | Task]:
-    """User tapped a language button. Save it and confirm in the new language."""
+    """User tapped a language button. Save it. The first time, send the welcome
+    in that language; after that, just confirm the change."""
     if value not in LANGS:
         return []
+    first_time = not user.lang_chosen
     user.lang = value
     user.lang_chosen = True
     store.put_user(user)
+    if first_time:
+        return [send(user.user_id, "s.welcome", value)]
     return [send(user.user_id, "s.lang_changed", value)]
 
 

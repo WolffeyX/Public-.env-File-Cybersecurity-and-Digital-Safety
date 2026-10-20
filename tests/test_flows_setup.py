@@ -58,13 +58,12 @@ def test_btn_takes_label_from_catalogue():
 
 # ---- Step 2: first contact and language buttons ----
 
-def test_first_message_gets_language_choice_then_welcome():
+def test_first_message_gets_language_choice_only():
     store = InMemoryStore()
     out = flows.handle_event(make_event(text="Daftar"), store, DEPS)
-    assert len(out) == 2
+    assert len(out) == 1
     assert out[0].text == render("s.choose_lang", "ms")
     assert [b.id for b in out[0].buttons] == ["lang:ms:-", "lang:en:-"]
-    assert out[1].text == render("s.welcome", "ms")
 
 
 def test_duplicate_first_message_gets_one_greeting():
@@ -74,14 +73,34 @@ def test_duplicate_first_message_gets_one_greeting():
     assert again == []
 
 
-def test_choosing_english_saves_language_and_confirms():
+def test_first_language_choice_sends_welcome_in_that_language():
     store = InMemoryStore()
     flows.handle_event(make_event(text="hi", msg_id="m1"), store, DEPS)
     out = flows.handle_event(
         make_event(kind="button", button_id="lang:en:-", msg_id="m2"), store, DEPS)
     user = store.get_user("sim:anak")
     assert user.lang == "en" and user.lang_chosen is True
-    assert out[0].text == render("s.lang_changed", "en")
+    assert out[0].text == render("s.welcome", "en")
+
+
+def test_later_language_change_just_confirms():
+    store = InMemoryStore()
+    flows.handle_event(make_event(text="hi", msg_id="m1"), store, DEPS)
+    flows.handle_event(make_event(kind="button", button_id="lang:en:-", msg_id="m2"), store, DEPS)
+    out = flows.handle_event(
+        make_event(kind="button", button_id="lang:ms:-", msg_id="m3"), store, DEPS)
+    assert out[0].text == render("s.lang_changed", "ms")
+
+
+def test_commands_work_in_both_languages():
+    pairs = [("REGISTER", "s.ask_address"), ("DAFTAR", "s.ask_address"),
+             ("STOP", "h.stop_confirm"), ("BERHENTI", "h.stop_confirm"),
+             ("HELP", "h.help"), ("LANGUAGE", "s.choose_lang"), ("BAHASA", "s.choose_lang")]
+    for i, (word, reply) in enumerate(pairs):
+        store = InMemoryStore()
+        flows.handle_event(make_event(text="hi", msg_id=f"c{i}a"), store, DEPS)
+        out = flows.handle_event(make_event(text=word, msg_id=f"c{i}b"), store, DEPS)
+        assert out[0].text == render(reply, "ms"), word
 
 # ---- Step 3: route_text ----
 import itertools

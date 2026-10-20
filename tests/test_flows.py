@@ -27,7 +27,7 @@ def test_first_contact_returns_language_choice_and_welcome():
         deps,
     )
 
-    assert len(result) == 2
+    assert len(result) == 1
     assert all(message.to == "sim:anak" for message in result)
     assert store.get_user("sim:anak") is not None
 
@@ -42,7 +42,7 @@ def test_duplicate_event_is_ignored():
     first_result = handle_event(event, store, deps)
     second_result = handle_event(event, store, deps)
 
-    assert len(first_result) == 2
+    assert len(first_result) == 1
     assert second_result == []
 
 
@@ -154,7 +154,7 @@ def test_primary_contact_can_generate_pairing_code():
     )
 
     assert store.get_user("sim:anak").address_as == "Mak"
-    assert len(result) == 2
+    assert len(result) == 1
 
 
 

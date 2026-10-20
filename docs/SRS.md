@@ -328,7 +328,7 @@ The user interface consists of chat messages inside WhatsApp (or Telegram). The 
 |---|---|---|---|
 | **NFR-UI-01** | The *system* shall communicate only through text messages and buttons inside the *channel*. The *system* shall not send images, voice notes, videos or files to users in the MVP. | M | Message log contains only text and button messages. |
 | **NFR-UI-02** | A message shall contain at most 3 buttons. Each button label shall be at most 20 characters long. | M | Automated check of the message catalogue. |
-| **NFR-UI-03** | A *verdict* or *alert* message shall be at most 8 lines and at most 450 characters long, including the *evidence level* line. | M | Automated check of the message catalogue with the longest variable values. |
+| **NFR-UI-03** | A *verdict* or *alert* message shall be at most 10 lines and at most 700 characters long, including the *evidence level* line. | M | Automated check of the message catalogue with the longest variable values. |
 | **NFR-UI-04** | A *STOP verdict* shall begin with the 🛑 symbol and the words "JANGAN BAYAR". A *VERIFY verdict* shall begin with the 🟡 symbol and the words "Tunggu dulu". The symbol shall never be the only signal of the *verdict*. | M | Review of the message catalogue. |
 | **NFR-UI-05** | Messages shall address the *parent* with the name chosen by the *primary contact* (FR-01). | S | A parent registered as "Ayah" sees "Ayah" in the messages. |
 

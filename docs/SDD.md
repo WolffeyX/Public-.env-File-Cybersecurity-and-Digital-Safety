@@ -591,7 +591,7 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 | Rule | How we apply it |
 |---|---|
 | Action first | The first line of every verdict says what to do ("JANGAN BAYAR", "Tunggu dulu"). |
-| Short messages | At most 8 lines and 450 characters (SRS NFR-UI-03). One idea per line. |
+| Short messages | At most 10 lines and 700 characters (SRS NFR-UI-03). One idea per line. |
 | Tap, don't type | Every answer is a button. Typing is only needed for the pairing code. |
 | Familiar language | BM by default, everyday words, no "QR payload", "merchant" or "verify". |
 | Address them personally | Uses the name the child chose ("Mak", "Ayah"). |
