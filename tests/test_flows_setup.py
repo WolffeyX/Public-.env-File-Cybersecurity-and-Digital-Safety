@@ -83,6 +83,14 @@ def test_first_language_choice_sends_welcome_in_that_language():
     assert out[0].text == render("s.welcome", "en")
 
 
+def test_text_before_choosing_a_language_asks_for_the_language_again():
+    store = InMemoryStore()
+    flows.handle_event(make_event(text="hi", msg_id="n1"), store, DEPS)
+    out = flows.handle_event(make_event(text="hi", msg_id="n2"), store, DEPS)
+    assert out[0].text == render("s.choose_lang", "ms")
+    assert [b.id for b in out[0].buttons] == ["lang:ms:-", "lang:en:-"]
+
+
 def test_later_language_change_just_confirms():
     store = InMemoryStore()
     flows.handle_event(make_event(text="hi", msg_id="m1"), store, DEPS)
@@ -179,6 +187,7 @@ def test_berhenti_asks_for_confirmation():
 def test_other_text_gets_help():
     store = InMemoryStore()
     say(store, "sim:mak", "hi")
+    press(store, "sim:mak", "lang:ms:-")
     out = say(store, "sim:mak", "hello there")
     assert out[0].text == render("h.help", "ms")
 

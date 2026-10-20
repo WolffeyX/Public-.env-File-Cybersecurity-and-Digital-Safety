@@ -539,6 +539,8 @@ def route_text(event, store, deps):
     if CODE_RE.match(text):
         return on_code(user, text, store, deps)
 
+    if not user.lang_chosen:                    # never tapped a language: ask again
+        return [send(user.user_id, "s.choose_lang", lang, lang_buttons(lang))]
     return [send(user.user_id, "h.help", lang)]          # FR-23
 
 
