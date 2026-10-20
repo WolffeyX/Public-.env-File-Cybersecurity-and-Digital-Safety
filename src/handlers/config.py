@@ -1,7 +1,6 @@
 """Settings and secrets for the Lambda handlers (Owner B).
 
 Secrets live in SSM Parameter Store under SSM_PREFIX (default /semak/dev):
-  wa_token  wa_phone_number_id  wa_app_secret  wa_verify_token
   tg_token  tg_secret  report_pepper
 Missing parameters are allowed (e.g. no Telegram yet): they come back as "".
 """
@@ -13,8 +12,7 @@ import hashlib
 import json
 import os
 
-PARAM_NAMES = ("wa_token", "wa_phone_number_id", "wa_app_secret", "wa_verify_token",
-               "tg_token", "tg_secret", "report_pepper")
+PARAM_NAMES = ("tg_token", "tg_secret", "report_pepper")
 
 
 @functools.lru_cache(maxsize=1)
@@ -35,13 +33,8 @@ def secrets() -> dict[str, str]:
 
 @functools.lru_cache(maxsize=None)
 def channel(name: str):
-    """The Channel object for "wa" or "tg"."""
+    """The Channel object for "tg" (Telegram is the only channel)."""
     s = secrets()
-    if name == "wa":
-        from channels.whatsapp import WhatsAppChannel
-        return WhatsAppChannel(s["wa_token"], s["wa_phone_number_id"],
-                               s["wa_app_secret"], s["wa_verify_token"],
-                               os.environ.get("WA_API_VERSION", "v21.0"))
     if name == "tg":
         from channels.telegram import TelegramChannel
         return TelegramChannel(s["tg_token"], s["tg_secret"])

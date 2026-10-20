@@ -308,19 +308,19 @@ These are fixed on day 1 so each person can build against them in parallel.
 ```python
 @dataclass
 class InboundEvent:
-    channel: str             # "wa" or "tg"
+    channel: str             # "tg" (or "sim" locally)
     user_id: str             # phone number (wa) or chat id (tg)
     msg_id: str              # used to skip duplicates
     kind: str                # "text" | "image" | "button"
     text: str | None
-    media_ref: str | None    # WhatsApp media id or Telegram file_id
+    media_ref: str | None    # Telegram file_id
     button_id: str | None    # see 4.3
     ts: int
 
 @dataclass
 class Button:
     id: str
-    label: str               # max 20 characters for WhatsApp [VERIFY]
+    label: str               # max 20 characters (NFR-UI-02)
 
 @dataclass
 class Outbound:

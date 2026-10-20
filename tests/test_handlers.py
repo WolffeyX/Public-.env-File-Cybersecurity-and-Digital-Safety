@@ -15,20 +15,17 @@ os.environ["SECRETS_JSON"] = json.dumps({"report_pepper": "p"})
 
 
 class StubChannel:
-    name = "wa"
+    name = "tg"
 
     def __init__(self):
         self.sent = []
 
-    def handshake(self, query):
-        return query.get("hub.challenge") if query.get("hub.verify_token") == "tok" else None
-
     def verify(self, headers, raw_body, query):
-        return headers.get("x-hub-signature-256") == "good"
+        return headers.get("x-telegram-bot-api-secret-token") == "good"
 
     def parse(self, raw_body):
         body = json.loads(raw_body)
-        return [InboundEvent(channel="wa", user_id="wa:601", msg_id=body["id"], kind="text",
+        return [InboundEvent(channel="tg", user_id="tg:601", msg_id=body["id"], kind="text",
                              ts=1.0, text=body["text"])]
 
     def send(self, msg):
@@ -62,41 +59,39 @@ def http(method, path, body="", headers=None, query=None, b64=False):
             "isBase64Encoded": b64}
 
 
-def test_handshake(aws):
+def test_unknown_path_is_404(aws):
     *_, ingest, _ = aws
-    ok = ingest.handler(http("GET", "/wa", query={"hub.verify_token": "tok", "hub.challenge": "42"}), None)
-    bad = ingest.handler(http("GET", "/wa", query={"hub.verify_token": "no", "hub.challenge": "42"}), None)
-    assert (ok["statusCode"], ok["body"], bad["statusCode"]) == (200, "42", 403)
+    assert ingest.handler(http("POST", "/wa", "{}"), None)["statusCode"] == 404
 
 
 def test_bad_signature_is_rejected_and_not_queued(aws):
     sqs, events, *_ , ingest, _ = aws
-    r = ingest.handler(http("POST", "/wa", json.dumps({"id": "x", "text": "hi"}),
-                            headers={"X-Hub-Signature-256": "evil"}), None)
+    r = ingest.handler(http("POST", "/tg", json.dumps({"id": "x", "text": "hi"}),
+                            headers={"X-Telegram-Bot-Api-Secret-Token": "evil"}), None)
     assert r["statusCode"] == 401
     assert "Messages" not in sqs.receive_message(QueueUrl=events)
 
 
 def test_base64_body_is_queued_with_user_group(aws):
     sqs, events, *_ , ingest, _ = aws
-    r = ingest.handler(http("POST", "/wa", json.dumps({"id": "m1", "text": "Daftar"}),
-                            headers={"X-Hub-Signature-256": "good"}, b64=True), None)
+    r = ingest.handler(http("POST", "/tg", json.dumps({"id": "m1", "text": "Daftar"}),
+                            headers={"X-Telegram-Bot-Api-Secret-Token": "good"}, b64=True), None)
     assert r["statusCode"] == 200
     msg = sqs.receive_message(QueueUrl=events, AttributeNames=["MessageGroupId"])["Messages"][0]
     assert json.loads(msg["Body"])["text"] == "Daftar"
-    assert msg["Attributes"]["MessageGroupId"] == "wa:601"
+    assert msg["Attributes"]["MessageGroupId"] == "tg:601"
 
 
 def test_worker_sends_outbound_and_schedules_tasks(aws, monkeypatch):
     sqs, events, timers, stub, _, worker = aws
     import core.flows as flows
     monkeypatch.setattr(flows, "handle_event", lambda ev, store, deps: [
-        Outbound(to="wa:601", text="hello"),
-        Task("decode", "wa:601", "c1", 0),
-        Task("reminder", "wa:601", "c1", 120),
+        Outbound(to="tg:601", text="hello"),
+        Task("decode", "tg:601", "c1", 0),
+        Task("reminder", "tg:601", "c1", 120),
     ])
     monkeypatch.setenv("STORE", "memory")
-    body = json.dumps(InboundEvent("wa", "wa:601", "m9", "text", 1.0, text="x").__dict__)
+    body = json.dumps(InboundEvent("tg", "tg:601", "m9", "text", 1.0, text="x").__dict__)
     worker.handler({"Records": [{"body": body}]}, None)
     assert [m.text for m in stub.sent] == ["hello"]
     fifo = json.loads(sqs.receive_message(QueueUrl=events)["Messages"][0]["Body"])

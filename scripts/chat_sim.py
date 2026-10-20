@@ -1,4 +1,4 @@
-"""Local chat simulator: test the whole bot with no AWS and no WhatsApp.
+"""Local chat simulator: test the whole bot with no AWS and no Telegram.
 
 Run from the repo root (inside your venv):
     python scripts/chat_sim.py

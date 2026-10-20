@@ -1,7 +1,7 @@
 """Ingest Lambda: API Gateway -> verify -> SQS FIFO (Owner B). SDD 2.2, 4.4.
 
 Must answer fast: no decoding or database work here.
-Routes: GET /wa (handshake), POST /wa, POST /tg.
+Route: POST /tg.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ def _resp(status: int, body: str = "") -> dict:
 def handler(event, context):
     method = event["requestContext"]["http"]["method"]
     path = event.get("rawPath", "")
-    name = "wa" if path.endswith("/wa") else "tg" if path.endswith("/tg") else None
+    name = "tg" if path.endswith("/tg") else None
     if name is None:
         return _resp(404)
 
@@ -41,10 +41,6 @@ def handler(event, context):
     raw = event.get("body") or ""
     raw_body = base64.b64decode(raw) if event.get("isBase64Encoded") else raw.encode()
     ch = channel(name)
-
-    if method == "GET" and name == "wa":
-        challenge = ch.handshake(query)
-        return _resp(200, challenge) if challenge is not None else _resp(403)
 
     if method != "POST":
         return _resp(405)
