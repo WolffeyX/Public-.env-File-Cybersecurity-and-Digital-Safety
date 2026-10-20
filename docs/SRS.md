@@ -2,11 +2,12 @@
 
 | | |
 |---|---|
-| **Product** | Semak Dulu ("Check First"), a WhatsApp bot that checks payment QR codes for seniors |
+| **Product** | Semak Dulu ("Check First"), a Telegram bot that checks payment QR codes for seniors |
 | **Track** | Cybersecurity: scam prevention for vulnerable Malaysians |
-| **Version** | 1.0 (draft), 14 Oct 2026 |
+| **Version** | 1.1, 20 Oct 2026 |
+| **Changes in 1.1** | Telegram is the only *channel* (NFR-RO-03 was applied). WhatsApp-only constraints are marked not applicable. NFR-UI-03 now allows 10 lines and 700 characters. The third question button is "Keluarga/Kawan/Kedai". |
 | **Status** | Ready for team review |
-| **Related document** | Software Design Document (SDD) v1.0, which describes **how** the system meets these requirements |
+| **Related document** | Software Design Document (SDD) v1.1, which describes **how** the system meets these requirements |
 | **Template** | Follows the SRS template in "TFB2014 Week 04b: Specifying Requirements" (chapters 1 to 4) |
 
 ### How to read this document
@@ -85,7 +86,7 @@ The system does **not**: detect AI-cloned voices, scan phishing links, detect de
 
 | User group | Profile | Abilities and knowledge | How they use the product |
 |---|---|---|---|
-| **Parent** (main user) | Malaysian, 50 years or older. Uses WhatsApp daily for family chats. May have low digital literacy. May be anxious or rushed during a scam call. | Can open WhatsApp, forward an image, and tap a button. May not be able to type quickly, find files in a gallery, or open a website. BM is the most likely language. | Forwards a QR image, taps one answer, reads the *verdict*. |
+| **Parent** (main user) | Malaysian, 50 years or older. Uses WhatsApp daily for family chats. May have low digital literacy. May be anxious or rushed during a scam call. | Can open a chat app, forward an image, and tap a button. May not be able to type quickly, find files in a gallery, or open a website. BM is the most likely language. | Forwards a QR image, taps one answer, reads the *verdict*. |
 | **Primary contact** (set-up user) | Adult son or daughter, typically 25 to 45 years old. Confident smartphone user. Often busy at work. | Can save a contact, type short commands, and follow short instructions. | Sets up the service on a visit, receives *alerts*, taps "Saya uruskan". |
 | **Second contact** (optional) | Another family member: sibling, spouse or relative. | Same as the primary contact. | Receives *alerts* only when the primary contact does not respond. |
 | **Hackathon judge** (evaluator, not an end user) | Technical or business background. | Tests the product live or watches the demo (TBD, see Appendix A). | Evaluates impact, technical execution, usability and feasibility. |
@@ -100,7 +101,7 @@ The system does **not**: detect AI-cloned voices, scan phishing links, detect de
 | AS-2 | A DuitNow QR code with merchant category code `0000` belongs to a personal account. This held for 3 of 3 personal QR codes tested. | TBV: test e-wallet receive-money QR codes |
 | AS-3 | The value `A0000006150001` in tag 26 identifies a DuitNow QR code. | TBV: check PayNet's DuitNow QR specification |
 | AS-4 | The *parent* forwards the QR image to the system before paying. The setup visit and practice check build this habit. | Accepted risk: the system cannot help a *parent* who does not forward. |
-| AS-5 | The *parent* and *contacts* have a smartphone with WhatsApp and a mobile data connection. | Accepted |
+| AS-5 | The *parent* and *contacts* have a smartphone with Telegram and a mobile data connection. | Accepted |
 | AS-6 | 997 is the National Scam Response Centre hotline. | TBV: number, operating hours and scope |
 
 #### Constraints
@@ -110,9 +111,9 @@ The system does **not**: detect AI-cloned voices, scan phishing links, detect de
 | CO-1 | The system must support Bahasa Melayu. | Hackathon requirement |
 | CO-2 | The team must deliver code, a demo, a working solution and slides by **21 Oct 2026**. Features are frozen on **19 Oct 2026**. | Hackathon deadline, team plan |
 | CO-3 | The team has 3 to 4 developers. | Team |
-| CO-4 | WhatsApp allows a maximum of 3 reply buttons per message. | TBV: Meta WhatsApp Cloud API documentation |
-| CO-5 | WhatsApp only allows a business to send a free-form message to a user who has messaged it within the last 24 hours. Outside that window, an approved template is required. | TBV: Meta documentation |
-| CO-6 | The Meta test phone number can only send messages to a small number of pre-registered phone numbers. | TBV: Meta documentation |
+| CO-4 | ~~WhatsApp allows a maximum of 3 reply buttons per message.~~ Not applicable since v1.1: WhatsApp is not used. | Closed |
+| CO-5 | ~~WhatsApp only allows a business to send a free-form message to a user who has messaged it within the last 24 hours. Outside that window, an approved template is required.~~ Not applicable since v1.1: WhatsApp is not used. | Closed |
+| CO-6 | ~~The Meta test phone number can only send messages to a small number of pre-registered phone numbers.~~ Not applicable since v1.1: WhatsApp is not used. | Closed |
 | CO-7 | The system must comply with Malaysia's Personal Data Protection Act 2010 (PDPA). | Law (TBV: exact obligations) |
 | CO-8 | The system must use free tiers or minimal-cost cloud services during the hackathon. | Budget |
 
@@ -122,12 +123,12 @@ This dictionary defines every term used in the requirements. Terms in *italics* 
 
 | Term | Definition |
 |---|---|
-| **System** | The Semak Dulu bot, including its logic and stored data. It does not include WhatsApp or Telegram themselves. |
+| **System** | The Semak Dulu bot, including its logic and stored data. It does not include Telegram itself. |
 | **Parent** | A user who is linked to at least one *contact* and has given *consent*. The person the system protects. |
 | **Contact** | A *primary contact* or a *second contact*. |
 | **Primary contact** | The user who registered the *parent*. Exactly one per *parent*. |
 | **Second contact** | An optional extra family member linked to the *parent*. At most one per *parent*. |
-| **Channel** | The messaging app used to talk to the *system*: WhatsApp (main) or Telegram (fallback). |
+| **Channel** | The messaging app used to talk to the *system*: Telegram. |
 | **Pairing code** | A 6-character code that the *system* gives the *primary contact*, used once to link the *parent*. Valid for 24 hours. |
 | **Consent** | The *parent's* tap on the "Setuju" button, which allows the *system* to send *alerts* about them. |
 | **Check** | One QR verification, from the moment the *parent* forwards an image until the *system* sends a *verdict* or the *check* expires. |
@@ -176,8 +177,7 @@ The *system* sits between the users and the messaging *channels*. It has four fu
 
 | Adjacent system | Data the system consumes | Data the system produces | Type |
 |---|---|---|---|
-| WhatsApp (main *channel*) | Text messages, images, button taps, sender phone number | Text messages, messages with up to 3 buttons | Two-way, automated |
-| Telegram (fallback *channel*) | Same as WhatsApp, with a chat ID instead of a phone number | Same as WhatsApp | Two-way, automated. Used if WhatsApp is not available (TBD, Appendix A). |
+| Telegram (*channel*) | Text messages, images, button taps, sender chat ID | Text messages, messages with up to 3 buttons | Two-way, automated |
 | Semak Mule website | Nothing | A link inside some messages | Link only, no automated exchange |
 | Banks, NSRC (997), emergency services (999) | Nothing | Phone numbers or names in messages | Named only, no automated exchange |
 
@@ -222,10 +222,10 @@ Requirements are grouped by functional area. Each has an ID, a priority and an a
 
 | ID | Requirement | Priority | Acceptance criterion |
 |---|---|---|---|
-| **FR-05** | The *system* shall accept an image that a user forwards or sends in a WhatsApp chat (or Telegram chat), as the start of a *check*. The user shall not need to install any app other than WhatsApp (or Telegram), and shall not need to type anything to start a *check*. | M | Forwarding a QR screenshot from another WhatsApp chat starts a check. |
+| **FR-05** | The *system* shall accept an image that a user forwards or sends in a Telegram chat, as the start of a *check*. The user shall not need to install any app other than Telegram, and shall not need to type anything to start a *check*. | M | Forwarding a QR screenshot from another chat starts a check. |
 | **FR-06** | For each image in a *check*, the *system* shall classify the content as exactly one of: *DuitNow QR*, other *payment QR*, web link, other text, no QR code found, or unreadable image. | M | Each test image in the fixture set (SDD section 11.2) receives its expected class. |
 | **FR-07** | For each *DuitNow QR*, the *system* shall extract the *payee name*, whether it is *static* or *dynamic*, the amount (if the QR contains one), and whether it is a *personal account* or a *business account*. If a field is missing from the QR, the *system* shall record that field as unknown and shall not guess it. | M | The 5 sample QR codes return the expected payee name, type, amount and account type. A QR without tag 52 returns "account type unknown". |
-| **FR-08** | Within 3 seconds of receiving an image, the *system* shall ask the *parent* "Who asked you to pay?" with exactly 3 buttons: "Bank/Polis/Mahkamah" (*claim* OFFICIAL), "Kurier" (*claim* COURIER), and "Saudara/Kawan/Kedai" (*claim* KNOWN_PERSON). The *system* shall send this question before the result of FR-06 is known. | M | The question with 3 buttons arrives for every forwarded image, including blurry images and images without a QR code. |
+| **FR-08** | Within 3 seconds of receiving an image, the *system* shall ask the *parent* "Who asked you to pay?" with exactly 3 buttons: "Bank/Polis/Mahkamah" (*claim* OFFICIAL), "Kurier" (*claim* COURIER), and "Keluarga/Kawan/Kedai" (*claim* KNOWN_PERSON). The *system* shall send this question before the result of FR-06 is known. | M | The question with 3 buttons arrives for every forwarded image, including blurry images and images without a QR code. |
 | **FR-09** | The *system* shall give a *STOP verdict* in exactly these two cases: (a) the *claim* is OFFICIAL, whatever the image contains, including when no QR code could be read; (b) the *claim* is COURIER and the image contains a *DuitNow QR* for a *personal account*. The *system* shall make this decision without using any *QR reports*. | M | Test matrix in section 2.2.3: every STOP row returns STOP, with an empty report store. |
 | **FR-10** | In every case not covered by FR-09, the *system* shall give a *VERIFY verdict*. No message that the *system* sends, in any language, to any user, shall contain a *safety claim*. | M | (1) Every VERIFY row in section 2.2.3 returns VERIFY. (2) An automated scan of every message text in both languages finds no safety claim. |
 | **FR-11** | Every *verdict* message shall start with the instruction ("JANGAN BAYAR" for *STOP*, "Tunggu dulu, jangan bayar dahulu" for *VERIFY*), followed by one reason in one sentence and exactly one *action*. If the QR contains a *payee name*, the *VERIFY verdict* shall show it. | M | Review of every verdict message: the first line is the instruction, and exactly one action is present. |
@@ -308,7 +308,7 @@ The MVP is sized for the hackathon demo and testing only.
 
 | Item | Expected volume (MVP) |
 |---|---|
-| Registered users | Up to 10 (the Meta test number allows only a few registered phones, CO-6) |
+| Registered users | Up to 10 (hackathon demo) |
 | *Checks* per day | Up to 200 (during testing) |
 | QR image size | Up to 5 MB per image. Larger images are rejected with a message asking for a normal photo or screenshot. |
 | Stored data per user | Under 2 KB for the profile and links |
@@ -322,7 +322,7 @@ The MVP is sized for the hackathon demo and testing only.
 
 ### 3.1 Look and feel / user interface
 
-The user interface consists of chat messages inside WhatsApp (or Telegram). The *system* does not have its own app, website or screens.
+The user interface consists of chat messages inside Telegram. The *system* does not have its own app, website or screens.
 
 | ID | Requirement | Priority | AC |
 |---|---|---|---|
@@ -376,7 +376,7 @@ Times are measured from the moment the *channel* delivers the user's message to 
 | ID | Requirement | Priority | AC |
 |---|---|---|---|
 | **NFR-SE-01** | **Transmission:** all data between the *channels* and the *system* shall travel over HTTPS (TLS 1.2 or later). | M | Endpoint test rejects plain HTTP. |
-| **NFR-SE-02** | **Authenticity:** the *system* shall process only requests that carry a valid signature or secret token from WhatsApp or Telegram. The *system* shall reject every other request without processing it. | M | A request with a wrong signature returns an error and produces no reply. |
+| **NFR-SE-02** | **Authenticity:** the *system* shall process only requests that carry a valid signature or secret token from Telegram. The *system* shall reject every other request without processing it. | M | A request with a wrong signature returns an error and produces no reply. |
 | **NFR-SE-03** | **Data access:** only the *system's* own cloud functions and the team's named administrators shall have access to stored data. Each cloud function shall have only the permissions it needs. | M | Permission review. |
 | **NFR-SE-04** | **Secrets:** access tokens and the scrambling key shall not appear in the code repository or in logs. | M | Repository and log scan finds no secrets. |
 | **NFR-SE-05** | **Abuse limits:** the *system* shall accept at most 10 *checks* per user per 10 minutes. When a user exceeds this limit, the *system* shall tell them to wait. | S | The 11th check within 10 minutes receives the "please wait" message. |
@@ -389,8 +389,8 @@ Times are measured from the moment the *channel* delivers the user's message to 
 
 | Item | Development environment | Target environment |
 |---|---|---|
-| User device | Not applicable | Any Android or iOS smartphone with a current WhatsApp version that shows reply buttons (TBV: minimum WhatsApp version) |
-| Channels | WhatsApp Cloud API test number, Telegram Bot API | Same. A verified WhatsApp business number after the hackathon (TBD). |
+| User device | Not applicable | Any Android or iOS smartphone with a current Telegram version |
+| Channels | Telegram Bot API | Same. WhatsApp may be added after the hackathon (TBD). |
 | Programming language | Python 3.12 | Python 3.12 |
 | Cloud platform | Amazon Web Services, serverless (Lambda, API Gateway, SQS, DynamoDB) | Same |
 | Region | Asia Pacific (Malaysia) if available, otherwise Asia Pacific (Singapore) | Same (TBV) |
@@ -406,9 +406,9 @@ Times are measured from the moment the *channel* delivers the user's message to 
 
 | ID | Requirement | Priority |
 |---|---|---|
-| **NFR-RO-01** | The team shall deploy a demo version and register the demo phones on the WhatsApp test number by 19 Oct 2026. | M |
+| **NFR-RO-01** | The team shall deploy a demo version and test it on the demo phones by 19 Oct 2026. | M |
 | **NFR-RO-02** | The team shall record a backup demo video of scenarios S1, S2, S5, S8 and S9 (SDD section 11.3) by 20 Oct 2026. | M |
-| **NFR-RO-03** | If WhatsApp is not working by the end of 15 Oct 2026, the team shall make Telegram the main *channel* for the demo. | M |
+| **NFR-RO-03** | If WhatsApp is not working by the end of 15 Oct 2026, the team shall make Telegram the main *channel* for the demo. **Applied in v1.1:** Telegram is the only *channel*. | M |
 | **NFR-RO-04** | The team shall provide a one-page setup guide for families (the message in SDD section 6.1 plus 3 steps). | S |
 
 #### System support
@@ -439,7 +439,7 @@ Times are measured from the moment the *channel* delivers the user's message to 
 | [5] | IEEE Std 830-1998, *IEEE Recommended Practice for Software Requirements Specifications* |
 | [6] | C. Rupp, "Linguistic methods of Requirements Engineering (NLP)", EuroSPI, 2000 |
 | [7] | Atlassian, "Software Design Document" guide, atlassian.com/work-management/knowledge-sharing/documentation/software-design-document |
-| [8] | Meta, *WhatsApp Business Platform: Cloud API* documentation, developers.facebook.com (TBV for CO-4, CO-5, CO-6) |
+| [8] | Meta, *WhatsApp Business Platform: Cloud API* documentation, developers.facebook.com (not used since v1.1) |
 | [9] | Telegram, *Telegram Bot API* documentation, core.telegram.org/bots/api |
 | [10] | EMVCo, *EMV QR Code Specification for Payment Systems: Merchant-Presented Mode* |
 | [11] | PayNet, *DuitNow QR* specification (TBV: availability and version) |
@@ -456,12 +456,12 @@ Times are measured from the moment the *channel* delivers the user's message to 
 | 2 | Banks, police and courts never ask for QR payment during a call | TBV | AS-1, FR-09 (V-1) | Pitch owner | 18 Oct |
 | 3 | MCC `0000` means a personal account, including e-wallet receive-money QRs | TBV | AS-2, FR-09 (V-2) | Core owner | 16 Oct |
 | 4 | DuitNow identifier `A0000006150001` | TBV | AS-3, FR-06 | Core owner | 16 Oct |
-| 5 | WhatsApp button limit, 24-hour window, test-number limit | TBV | CO-4, CO-5, CO-6, FR-18 | Platform owner | 15 Oct |
+| 5 | ~~WhatsApp button limit, 24-hour window, test-number limit~~ | Closed (v1.1) | CO-4, CO-5, CO-6, FR-18 | Platform owner | 15 Oct |
 | 6 | 997 number, hours and scope | TBV | AS-6, FR-13, FR-20 | Content owner | 18 Oct |
 | 7 | PDPA obligations | TBV | CO-7, NFR-SE-08 | Content owner | 19 Oct |
 | 8 | Hackathon judging end date | TBD | NFR-MT-01 | Team lead | 15 Oct |
 | 9 | Pilot size and operation after the hackathon | TBD | Section 2.3.3, NFR-MT-01 | Team | After 21 Oct |
-| 10 | Minimum WhatsApp version that shows reply buttons | TBV | Section 3.6 | Platform owner | 16 Oct |
+| 10 | ~~Minimum WhatsApp version that shows reply buttons~~ | Closed (v1.1) | Section 3.6 | Platform owner | 16 Oct |
 | 11 | Current Semak Mule web address | TBV | FR-17 | Content owner | 18 Oct |
 
 ## Appendix B: How the writing rules were applied
@@ -470,7 +470,7 @@ The lecture's rules R1 to R6 were applied to every requirement. These examples s
 
 | Rule | Earlier wording | Problem | Wording in this SRS |
 |---|---|---|---|
-| R1 Active voice | "The bot accepts a forwarded image... with no installs" | Unclear who installs | FR-05: "The user shall not need to install any app other than WhatsApp" |
+| R1 Active voice | "The bot accepts a forwarded image... with no installs" | Unclear who installs | FR-05: "The user shall not need to install any app other than Telegram" |
 | R2 Main verbs | "Reports separate scam-pattern reasons from seller disputes" | "Separate" hides the process | FR-15: "Dispute and other reports shall not count toward the evidence level" |
 | R3 Complete process words | "The bot tells them to call their bank and 999" | Who, in what order, and what else happens? | FR-13: 4 steps in order, plus the PAID alert to the primary contact |
 | R4 Comparatives | "Wording scales with evidence", "a stronger warning" | Stronger than what? | FR-15: 3 evidence levels with fixed counts and fixed text |

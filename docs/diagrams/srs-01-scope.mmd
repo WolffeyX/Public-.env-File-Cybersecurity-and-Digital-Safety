@@ -10,14 +10,12 @@ flowchart LR
     F3["Family alerts"]
     F4["QR reports"]
   end
-  WA["WhatsApp<br/>(main channel)"]
-  TG["Telegram<br/>(fallback channel)"]
+  TG["Telegram<br/>(channel)"]
   SM["Semak Mule website<br/>(link only)"]
   BK["Bank hotline, 997, 999<br/>(named in messages only)"]
-  P <--> WA
-  C <--> WA
-  S <--> WA
-  WA <-- "messages, images,<br/>button taps" --> Product
-  TG <-. "same data, if WhatsApp<br/>is unavailable" .-> Product
+  P <--> TG
+  C <--> TG
+  S <--> TG
+  TG <-- "messages, images,<br/>button taps" --> Product
   Product -. "shows link" .-> SM
   Product -. "tells user to call" .-> BK
