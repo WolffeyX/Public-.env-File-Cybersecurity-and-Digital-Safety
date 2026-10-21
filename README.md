@@ -41,7 +41,7 @@ Seniors are often alone when this happens, and they rarely know how to check who
 ### Setup (once, about 2 minutes, during a family visit)
 
 1. The adult child opens the bot, picks **Bahasa Melayu** or **English**, and types `DAFTAR` (or `REGISTER`).
-2. The bot asks how to address the parent (for example *Mak*, *Ayah*, *Mum*) and gives a 6-character code.
+2. The bot asks how to address the parent (for example _Mak_, _Ayah_, _Mum_) and gives a 6-character code.
 3. On the parent's phone, the parent opens the bot, picks a language and sends the code.
 4. The parent reads a short consent notice and taps **Setuju / I agree**. The two phones are now linked.
 5. The parent does one **practice check** (no alert is sent), so the first real use is not the first use.
@@ -56,15 +56,15 @@ Seniors are often alone when this happens, and they rarely know how to check who
 3. Meanwhile, the bot decodes the QR in the background (DuitNow payload, personal or business account, payee name, amount).
 4. The bot replies with one of two verdicts. **There is no "safe" verdict.**
 
-| Rule | When | Verdict |
-|---|---|---|
-| V-1 | Caller claims to be a bank, the police or a court | 🛑 **DO NOT PAY**: these never ask for payment by QR |
-| V-2 | Caller claims to be a courier, and the QR pays a **personal** account | 🛑 **DO NOT PAY** |
-| V-3 | Caller claims to be a courier, and the QR could not be read | 🟡 **Wait**: check first |
-| V-4 | Caller claims to be a courier, and the QR pays a business account | 🟡 **Wait**: check with the courier's official app |
-| V-5 | Family, friend or shop | 🟡 **Wait**: call back on a saved number, ask the family code word, or check the shop name |
+| Rule | When                                                                  | Verdict                                                                                    |
+| ---- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| V-1  | Caller claims to be a bank, the police or a court                     | 🛑 **DO NOT PAY**: these never ask for payment by QR                                       |
+| V-2  | Caller claims to be a courier, and the QR pays a **personal** account | 🛑 **DO NOT PAY**                                                                          |
+| V-3  | Caller claims to be a courier, and the QR could not be read           | 🟡 **Wait**: check first                                                                   |
+| V-4  | Caller claims to be a courier, and the QR pays a business account     | 🟡 **Wait**: check with the courier's official app                                         |
+| V-5  | Family, friend or shop                                                | 🟡 **Wait**: call back on a saved number, ask the family code word, or check the shop name |
 
-5. On a 🛑 verdict, the bot **alerts the adult child**: *"ALERT: Call Mak now."* The child taps **Saya uruskan / I'm handling it**.
+5. On a 🛑 verdict, the bot **alerts the adult child**: _"ALERT: Call Mak now."_ The child taps **Saya uruskan / I'm handling it**.
 6. If nobody taps within 3 minutes, the bot alerts the second contact (if there is one). If still nobody responds, the bot tells the parent again to call the bank and 997.
 7. Every verdict has two follow-up buttons:
    - **I already paid**: step-by-step advice (bank, 997, 999, police report) and an urgent family alert.
@@ -72,13 +72,13 @@ Seniors are often alone when this happens, and they rarely know how to check who
 
 ### Commands
 
-| Bahasa Melayu | English | What it does |
-|---|---|---|
-| `DAFTAR` | `REGISTER` | Child starts linking a parent's phone |
-| `TAMBAH` | `ADD` | Child invites a second family member |
-| `BAHASA` | `LANGUAGE` | Change language |
-| `BERHENTI` | `STOP` | Delete all your data and links |
-| `BANTUAN` | `HELP` | Show help |
+| Bahasa Melayu | English    | What it does                          |
+| ------------- | ---------- | ------------------------------------- |
+| `DAFTAR`      | `REGISTER` | Child starts linking a parent's phone |
+| `TAMBAH`      | `ADD`      | Child invites a second family member  |
+| `BAHASA`      | `LANGUAGE` | Change language                       |
+| `BERHENTI`    | `STOP`     | Delete all your data and links        |
+| `BANTUAN`     | `HELP`     | Show help                             |
 
 Commands work in both languages. The bot shows the commands of the language the user chose.
 
@@ -87,12 +87,14 @@ Commands work in both languages. The bot shows the commands of the language the 
 You need **at least two Telegram accounts on two phones**: one plays the **child**, one plays the **parent**. To test the second family member, you need a **third** account.
 
 **Phone 1 (child)**
+
 1. Open [@semakdulu_dev_bot](https://t.me/semakdulu_dev_bot) and send `hi`.
 2. Tap **English** (or Bahasa Melayu).
 3. Type `REGISTER`, then a name for the parent, for example `Mum`.
 4. Note the 6-character code.
 
 **Phone 2 (parent)**
+
 1. Open the same bot, send `hi` and pick a language.
 2. Send the code from Phone 1, then tap **I agree**.
 3. Practice check: forward any QR code picture. You will see `[PRACTICE]` and no alert is sent.
@@ -103,11 +105,13 @@ You need **at least two Telegram accounts on two phones**: one plays the **child
 5. Try **I already paid** and **Report this QR**.
 
 **Phone 3 (optional second contact)**
+
 1. On Phone 1, type `ADD` and note the new code.
 2. On Phone 3, open the bot, pick a language, send the code and tap **Accept**.
 3. Trigger a 🛑 check from Phone 2 and do **not** tap on Phone 1. After about 3 minutes, Phone 3 is alerted.
 
 **Good to know**
+
 - The bot never moves money. Nothing you do here pays anyone.
 - A parent can run up to 10 checks per 10 minutes.
 - To start again, send `STOP` on each phone and tap **Yes, delete data**.
@@ -115,17 +119,17 @@ You need **at least two Telegram accounts on two phones**: one plays the **child
 
 ## Safety and privacy principles
 
-| Principle | How it is enforced |
-|---|---|
-| **Never say "safe"** | The verdict type has no SAFE value, and a test scans every message for safety words |
-| **Ask first, decode later** | The question is sent before decoding, so a blurry photo never blocks a 🛑 verdict |
-| **Same answer every time** | Fixed rules, no AI model in the verdict |
-| **QR images are never stored** | Images are decoded in memory and discarded. Pending checks expire after 15 minutes. |
-| **Family code word is never stored** | The bot only reminds families to use it |
-| **Reporters are anonymous** | Reporter ids are stored only as a keyed hash (HMAC) |
-| **Reports never cause a 🛑** | Reports add a warning line. Only static QRs can be reported. |
-| **Consent first** | No alert is sent about a parent until they tap "I agree". `STOP` deletes everything. |
-| **Short, plain messages** | Every verdict and alert is tested to fit 10 lines and 700 characters, in BM and English |
+| Principle                            | How it is enforced                                                                      |
+| ------------------------------------ | --------------------------------------------------------------------------------------- |
+| **Never say "safe"**                 | The verdict type has no SAFE value, and a test scans every message for safety words     |
+| **Ask first, decode later**          | The question is sent before decoding, so a blurry photo never blocks a 🛑 verdict       |
+| **Same answer every time**           | Fixed rules, no AI model in the verdict                                                 |
+| **QR images are never stored**       | Images are decoded in memory and discarded. Pending checks expire after 15 minutes.     |
+| **Family code word is never stored** | The bot only reminds families to use it                                                 |
+| **Reporters are anonymous**          | Reporter ids are stored only as a keyed hash (HMAC)                                     |
+| **Reports never cause a 🛑**         | Reports add a warning line. Only static QRs can be reported.                            |
+| **Consent first**                    | No alert is sent about a parent until they tap "I agree". `STOP` deletes everything.    |
+| **Short, plain messages**            | Every verdict and alert is tested to fit 10 lines and 700 characters, in BM and English |
 
 ## Architecture
 
@@ -138,16 +142,16 @@ You need **at least two Telegram accounts on two phones**: one plays the **child
 5. Events that fail 3 times go to a **dead-letter queue**. Errors raise a **CloudWatch** alarm.
 6. Secrets (Telegram token, webhook secret, report pepper) live in **SSM Parameter Store**.
 
-| Layer | Technology |
-|---|---|
-| Channel | Telegram Bot API |
-| Compute | AWS Lambda (Python 3.12), 2 functions |
-| Queues | Amazon SQS FIFO (events), SQS standard (timers), dead-letter queue |
-| Database | Amazon DynamoDB, single table, TTL on |
-| Secrets | AWS Systems Manager Parameter Store |
-| Monitoring | Amazon CloudWatch logs, metric filter and alarm |
-| Infrastructure as code | AWS SAM (`template.yaml`), no Docker needed |
-| QR decoding | zxing-cpp + Pillow, packaged as a Lambda layer |
+| Layer                  | Technology                                                         |
+| ---------------------- | ------------------------------------------------------------------ |
+| Channel                | Telegram Bot API                                                   |
+| Compute                | AWS Lambda (Python 3.12), 2 functions                              |
+| Queues                 | Amazon SQS FIFO (events), SQS standard (timers), dead-letter queue |
+| Database               | Amazon DynamoDB, single table, TTL on                              |
+| Secrets                | AWS Systems Manager Parameter Store                                |
+| Monitoring             | Amazon CloudWatch logs, metric filter and alarm                    |
+| Infrastructure as code | AWS SAM (`template.yaml`), no Docker needed                        |
+| QR decoding            | zxing-cpp + Pillow, packaged as a Lambda layer                     |
 
 More diagrams (context, data model, sequences, decode pipeline, verdict flow, escalation) are in [`docs/diagrams/`](docs/diagrams/) and explained in the [SDD](docs/SDD.md).
 
@@ -251,11 +255,11 @@ Lambda reads secrets at cold start. After changing a secret, redeploy or wait fo
 
 ## Documentation
 
-| Document | What it covers |
-|---|---|
+| Document                                           | What it covers                                                                        |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | [Software Requirements Specification](docs/SRS.md) | Users, functional requirements (FR-01 to FR-27), data and non-functional requirements |
-| [Software Design Document](docs/SDD.md) | Architecture, data model, verdict rules, message design, testing, decisions log |
-| [Diagrams](docs/diagrams/) | Mermaid sources (`.mmd`) and rendered images (`.png`) |
+| [Software Design Document](docs/SDD.md)            | Architecture, data model, verdict rules, message design, testing, decisions log       |
+| [Diagrams](docs/diagrams/)                         | Mermaid sources (`.mmd`) and rendered images (`.png`)                                 |
 
 ## Limitations and future work
 
@@ -266,12 +270,12 @@ Lambda reads secrets at cold start. After changing a secret, redeploy or wait fo
 
 ## Team
 
-| Name | Role |
-|---|---|
-| _Name_ | **Platform:** AWS SAM stack, Lambda handlers, Telegram channel, deployment and demo video |
-| _Name_ | **Core engine:** DuitNow QR parsing and checksum, QR decoding, the verdict rules and their tests |
-| _Name_ | **Flows:** setup, check, alert and escalation flows, Malay and English messages, demo script |
-| _Name_ | **Design:** visual design, user journey and chat wireframes, and the pitch deck |
+| Name                  | Role                                                                                                  |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| Muhammad Wafi         | **Team Lead & Platform:** AWS SAM stack, Lambda handlers, Telegram channel, deployment and demo video |
+| Hana Safiyyah         | **Core engine:** DuitNow QR parsing and checksum, QR decoding, the verdict rules and their tests      |
+| Muhammad Nuh Syakirin | **Flows:** setup, check, alert and escalation flows, Malay and English messages, demo script          |
+| Danish Irfan          | **Design:** visual design, user journey and chat wireframes, and the pitch deck                       |
 
 ## AI tools usage
 
