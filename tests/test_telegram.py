@@ -1,4 +1,4 @@
-"""Tests for the Telegram adapter (Owner B, fallback channel). No network, no AWS."""
+"""Tests for the Telegram adapter (Owner B). No network, no AWS."""
 
 import json
 
@@ -61,7 +61,7 @@ def test_verify_rejects_when_secret_not_configured():
 
 
 # ---------------------------------------------------------------- parse
-# Shapes follow the Telegram Bot API "Update" object (TBV against current docs).
+# Shapes follow the Telegram Bot API "Update" object.
 
 def update(**body) -> bytes:
     return json.dumps({"update_id": 1001, **body}).encode()

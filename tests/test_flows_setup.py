@@ -1,4 +1,4 @@
-"""Milestone 1 tests: setup and linking (Owner C)."""
+"""Tests: setup and linking (Owner C)."""
 
 from types import SimpleNamespace
 

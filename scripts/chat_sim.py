@@ -7,7 +7,7 @@ Commands (each line is one user action):
     @anak  Daftar                 user "anak" types text
     @mak   img path/to/qr.png     user "mak" forwards an image
     @mak   img personal           fake image: personal | business | dynamic | noqr | url
-                                  (works before Owner A's decoder is ready)
+                                  (a ready-made fake QR, no image file needed)
     @mak   tap 1                  tap button number 1 of the last message that user got
     timers                        run every delayed task now (reminders, escalation)
     quit
@@ -24,6 +24,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from core.classify import decode_and_classify            # noqa: E402
 from core.flows import handle_event                      # noqa: E402
 from core.store import InMemoryStore                     # noqa: E402
 from core.types import Deps, InboundEvent, Outbound, Task  # noqa: E402
@@ -38,12 +39,7 @@ def decode_image(data: bytes):
     key = data.decode(errors="ignore")
     if key in FAKES:
         return FAKES[key]
-    try:
-        from core.classify import decode_and_classify
-        return decode_and_classify(data, PEPPER)
-    except NotImplementedError:
-        print("  (decoder not built yet, using NO_QR; try `img personal`)")
-        return NO_QR
+    return decode_and_classify(data, PEPPER)
 
 
 def fetch_media(user_id: str, ref: str) -> bytes:
@@ -62,11 +58,7 @@ def main() -> None:
         queue.append(event)
         while queue:
             e = queue.pop(0)
-            try:
-                results = handle_event(e, store, deps)
-            except NotImplementedError as err:
-                print(f"  [not built yet] {err}")
-                return
+            results = handle_event(e, store, deps)
             for r in results:
                 if isinstance(r, Outbound):
                     print(f"\n  ➜ to {r.to}:\n    " + r.text.replace("\n", "\n    "))

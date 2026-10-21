@@ -115,7 +115,7 @@ You need **at least two Telegram accounts on two phones**: one plays the **child
 - The bot never moves money. Nothing you do here pays anyone.
 - A parent can run up to 10 checks per 10 minutes.
 - To start again, send `STOP` on each phone and tap **Yes, delete data**.
-- The bot runs on a development stack for the hackathon and may be switched off after the hackathon.
+- The bot runs on a development stack and may be switched off after the hackathon.
 
 ## Safety and privacy principles
 
@@ -274,7 +274,7 @@ Lambda reads secrets at cold start. After changing a secret, redeploy or wait fo
 | --------------------- | ----------------------------------------------------------------------------------------------------- |
 | Muhammad Wafi         | **Team Lead & Platform:** AWS SAM stack, Lambda handlers, Telegram channel, deployment and demo video |
 | Hana Safiyyah         | **Core engine:** DuitNow QR parsing and checksum, QR decoding, the verdict rules and their tests      |
-| Muhammad Nuh Syakirin | **Flows:** setup, check, alert and escalation flows, Malay and English messages, demo script          |
+| Muhammad Nuh Syakirin | **Flows:** setup, check, alert and escalation flows, Malay and English messages                       |
 | Danish Irfan          | **Design:** visual design, user journey and chat wireframes, and the pitch deck                       |
 
 ## AI tools usage

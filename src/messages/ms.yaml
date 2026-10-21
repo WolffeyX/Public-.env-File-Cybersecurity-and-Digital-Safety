@@ -1,5 +1,4 @@
 # Katalog mesej Bahasa Melayu (Owner C).
-# PERLU disemak oleh penutur asli BM sebelum demo (NFR-US-07).
 # Peraturan (diuji oleh tests/test_messages.py):
 #   - Jangan guna perkataan yang menyatakan selamat, KECUALI ayat penafian
 #     "itu tidak bermakna ia selamat" (FR-10).
@@ -14,7 +13,7 @@ s.welcome: "Hai! Saya Semak Dulu. Saya bantu semak kod QR sebelum anda bayar ata
 s.ask_address: "Bagaimana saya patut panggil ibu atau bapa anda? Taip satu perkataan, contoh: Mak, Ayah, Mama."
 s.pair_code: "Kod anda: {code}\nBuka chat Semak Dulu di telefon {address_as}, dan hantar kod ini dalam masa 24 jam.\nCadangan: Buat satu kod rahsia keluarga secara bersemuka. Jika ada orang telefon mengaku saudara, minta kod itu untuk pastikan dia betul-betul keluarga. Saya tidak akan sekali-kali bertanya kod itu."
 s.code_invalid: "Kod ini tidak boleh digunakan. Minta ahli keluarga anda hantar kod baharu."
-s.consent: "Hai {address_as}, saya Semak Dulu. Jika ada orang minta {address_as} bayar guna kod QR, forward gambar QR itu kepada saya dahulu. Saya akan semak tanda-tanda penipuan.\nJika saya nampak tanda penipuan, saya akan terus maklumkan anak {address_as}.\nSaya simpan nombor telefon dan pautan keluarga sahaja. Gambar QR tidak disimpan.\nTaip BERHENTI bila-bila masa untuk padam data."
+s.consent: "Hai {address_as}, saya Semak Dulu. Jika ada orang minta {address_as} bayar guna kod QR, forward gambar QR itu kepada saya dahulu. Saya akan semak tanda-tanda penipuan.\nJika saya nampak tanda penipuan, saya akan terus maklumkan anak {address_as}.\nSaya simpan ID Telegram dan pautan keluarga sahaja. Gambar QR tidak disimpan.\nTaip BERHENTI bila-bila masa untuk padam data."
 s.linked_parent: "Terima kasih, {address_as}. Anda sudah dihubungkan dengan anak anda."
 s.linked_child: "{address_as} sudah dihubungkan ✅ Saya akan maklumkan anda jika saya nampak unsur-unsur penipuan (scam)."
 s.practice_invite: "Jom cuba sekali. Forward mana-mana gambar kod QR kepada saya. Ini latihan sahaja: tiada wang yang dipindahkan dan anak anda tidak akan dimaklumkan."

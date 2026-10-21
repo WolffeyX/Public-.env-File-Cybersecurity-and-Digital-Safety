@@ -1,4 +1,4 @@
-"""Telegram Bot API adapter (Owner B, Milestone 3, fallback). SDD 6.3.
+"""Telegram Bot API adapter (Owner B). SDD 4.1.
 
 Set the webhook once:
   https://api.telegram.org/bot<token>/setWebhook?url=<api>/tg&secret_token=<tg_secret>
@@ -8,7 +8,7 @@ Incoming: header x-telegram-bot-api-secret-token must equal tg_secret.
   update.callback_query.data   -> button (also call answerCallbackQuery)
 Sending: POST /bot<token>/sendMessage
   {"chat_id": raw, "text": ..., "reply_markup": {"inline_keyboard": [[{"text": label, "callback_data": id}], ...]}}
-  callback_data max 64 bytes: our Button ids must stay short (TBV)
+  callback_data max 64 bytes: our Button ids must stay short
 Media: GET /bot<token>/getFile?file_id=... -> file_path,
        then GET https://api.telegram.org/file/bot<token>/<file_path>
 """

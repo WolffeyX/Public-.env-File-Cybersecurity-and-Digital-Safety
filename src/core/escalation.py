@@ -1,4 +1,4 @@
-"""Family alert state machine (Owner C, Milestone 3). SDD 5.4, SRS FR-18..FR-20, FR-27.
+"""Family alert state machine (Owner C). SDD 5.4, SRS FR-18..FR-20, FR-27.
 
     PRIMARY_SENT --ack--> ACKED
     PRIMARY_SENT --180 s, second exists--> SECONDARY_SENT --ack--> ACKED

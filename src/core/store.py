@@ -1,8 +1,8 @@
 """Data storage (Owner C).
 
-InMemoryStore: COMPLETE. Use it in tests and in the local chat simulator.
+InMemoryStore: used in tests and in the local chat simulator.
                It is also the reference: DynamoStore must behave the same way.
-DynamoStore:   COMPLETE. Single-table design, SDD section 3.2. Tested with moto.
+DynamoStore:   production store. Single-table design, SDD section 3.2. Tested with moto.
 """
 
 from __future__ import annotations
@@ -149,7 +149,7 @@ class InMemoryStore:
 
 class DynamoStore:
     """Production store on one DynamoDB table (SDD section 3.2, 3.3).
-    COMPLETE and tested with moto in tests/test_store.py (same tests as InMemoryStore).
+    Tested with moto in tests/test_store.py (same tests as InMemoryStore).
 
     Keys:
       User      PK=USER#<user_id>        SK=PROFILE

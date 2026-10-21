@@ -1,4 +1,4 @@
-"""QR reports (Owner C, Milestone 3). SDD 5.5, SRS FR-14..FR-16."""
+"""QR reports (Owner C). SDD 5.5, SRS FR-14..FR-16."""
 
 from __future__ import annotations
 

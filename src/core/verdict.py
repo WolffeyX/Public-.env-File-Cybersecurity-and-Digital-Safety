@@ -1,4 +1,4 @@
-"""Verdict rules (Owner A, Milestone 3). SRS 2.2.3, SDD 5.3.
+"""Verdict rules (Owner A). SRS 2.2.3, SDD 5.3.
 
 There is no SAFE level. Reports never change the level (FR-09, FR-15).
 """

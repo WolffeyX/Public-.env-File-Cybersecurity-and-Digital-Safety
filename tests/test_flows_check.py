@@ -1,4 +1,4 @@
-"""Milestone 2 tests: image in, question out, decode, reminder, close (Owner C)."""
+"""Tests: image in, question out, decode, reminder, close (Owner C)."""
 
 try:
     from tests.fakes import Clock, InMemoryStore, ev, make_deps

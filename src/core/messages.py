@@ -1,4 +1,4 @@
-"""Message catalogue loader (Owner C). COMPLETE: edit the YAML files, not this code.
+"""Message catalogue loader (Owner C). To change wording, edit the YAML files, not this code.
 
 Usage:
     from core.messages import render, label

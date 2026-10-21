@@ -6,7 +6,7 @@ s.welcome: "Hi! I'm Semak Dulu. I help you check a QR code before you pay or tra
 s.ask_address: "What should I call your parent? Type one word, for example: Mak, Ayah, Mum."
 s.pair_code: "Your code: {code}\nOpen the Semak Dulu chat on {address_as}'s phone and send this code within 24 hours.\nTip: agree a family code word in person. If someone calls claiming to be family, ask for the code word to make sure it is really them. I will never ask for it."
 s.code_invalid: "This code does not work. Ask your family member to send you a new code."
-s.consent: "Hi {address_as}, I'm Semak Dulu. If someone asks you to pay with a QR code, forward the QR picture to me first. I will check it for signs of a scam.\nIf I see signs of a scam, I will tell your child straight away.\nI only keep phone numbers and family links. QR pictures are not kept.\nType STOP at any time to delete your data."
+s.consent: "Hi {address_as}, I'm Semak Dulu. If someone asks you to pay with a QR code, forward the QR picture to me first. I will check it for signs of a scam.\nIf I see signs of a scam, I will tell your child straight away.\nI only keep Telegram IDs and family links. QR pictures are not kept.\nType STOP at any time to delete your data."
 s.linked_parent: "Thank you. You are now linked with your child."
 s.linked_child: "{address_as} is now linked ✅ I will tell you if I see signs of a scam."
 s.practice_invite: "Let's try once. Forward any QR code picture to me. This is practice only: no money is moved and your child will not be told."

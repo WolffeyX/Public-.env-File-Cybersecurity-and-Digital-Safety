@@ -1,6 +1,5 @@
 
-"""Milestone 3 QR flow integration tests (Owner A)."""
-import pytest
+"""QR flow integration tests (Owner A)."""
 from core import flows
 from core.store import InMemoryStore
 from core.types import InboundEvent
@@ -35,11 +34,6 @@ def prepare_user():
     return clock, store, deps, handle
 
 
-@pytest.mark.xfail(
-    raises=NotImplementedError,
-    reason="Owner C has not implemented on_image yet",
-    strict=False,
-)
 def test_url_qr_flow():
     clock, store, deps, handle = prepare_user()
 
@@ -50,16 +44,10 @@ def test_url_qr_flow():
         media_ref="url",
     ))
 
-    # These assertions will be strengthened when on_image is implemented.
     assert store.get_user("sim:mak") is not None
     assert isinstance(result, list)
 
 
-@pytest.mark.xfail(
-    raises=NotImplementedError,
-    reason="Owner C has not implemented on_image yet",
-    strict=False,
-)
 def test_unreadable_qr_flow():
     clock, store, deps, handle = prepare_user()
 
@@ -70,6 +58,5 @@ def test_unreadable_qr_flow():
         media_ref="noqr",
     ))
 
-    # These assertions will be strengthened when on_image is implemented.
     assert store.get_user("sim:mak") is not None
     assert isinstance(result, list)

@@ -4,16 +4,13 @@ handle_event() is called by the worker (and by tests and scripts/chat_sim.py).
 It never calls the network: it reads/writes the Store and returns
 Outbound messages and Task jobs for the worker to send/schedule.
 
-Build order (Owner C card):
-  M1  route_text: language, DAFTAR, address name, pairing code, help, BAHASA, BERHENTI
-      route_button: lang, consent, accept2, stop
-  M2  on_image -> question + Task("decode")       (FR-05, FR-08, FR-26)
-      on_task "decode" -> save DecodeResult        (uses deps.decode_image)
-      on_claim -> verdict.decide() -> verdict text (FR-09..FR-12, FR-15, FR-17, FR-21)
-      on_task "reminder" / "close_check"           (FR-24, FR-25)
-      paid button                                  (FR-13)
-  M3  escalation.start_alert / on_ack / on_escalate (FR-18..FR-20, FR-27)
-      reports.open / reports.submit                 (FR-14..FR-16)
+What it handles:
+  text:    language, DAFTAR/REGISTER, the parent's name, pairing code, TAMBAH/ADD,
+           BAHASA/LANGUAGE, BERHENTI/STOP, BANTUAN/HELP              (FR-01..FR-04, FR-22, FR-23)
+  buttons: language, consent, accept2, stop, claim, paid, report, ack
+  image:   question + Task("decode")                                  (FR-05, FR-08, FR-26)
+  tasks:   decode, reminder, close_check, escalation                  (FR-18..FR-20, FR-24, FR-25)
+  verdict: verdict.decide() -> one verdict message                    (FR-09..FR-17, FR-21)
 """
 
 from __future__ import annotations
@@ -27,7 +24,7 @@ from core.messages import DEFAULT_LANG, LANGS, label, render
 from core.types import (AlertType, Button, Check, CheckStatus, Claim,
                         DecodeResult, Deps, InboundEvent, Level, Link,
                         Outbound, PairCode, QrKind, ReportReason, Role, Store,
-                        Task, User, Verdict)
+                        Task, User)
 
 REMINDER_AFTER_S = 120          # FR-24
 CLOSE_AFTER_S = 600             # FR-24
@@ -35,7 +32,6 @@ CHECK_TTL_S = 15 * 60           # DR-02
 PAIR_TTL_S = 24 * 3600          # DR-05
 RATE_LIMIT = 10                 # NFR-SE-05: checks per 10 minutes
 RATE_WINDOW_S = 600
-SEVERAL = 3                     # distinct scam reports for the "several" wording (FR-15)
 COMMANDS = {
     "daftar": "register", "register": "register",
     "tambah": "add_second", "add": "add_second",
@@ -58,7 +54,7 @@ NOTE_FOR_KIND = {
 
 
 # ---------------------------------------------------------------------------
-# Helpers (M1 step 1). Every later function in this file uses these.
+# Helpers. Every later function in this file uses these.
 # ---------------------------------------------------------------------------
 
 def get_or_create_user(user_id: str, store: Store, deps: Deps) -> User:
@@ -98,7 +94,7 @@ def lang_of_id(user_id: str, store: Store) -> str:
 
 
 # ---------------------------------------------------------------------------
-# M1 step 2: first contact and language choice
+# First contact and language choice
 # ---------------------------------------------------------------------------
 
 def first_contact(user_id: str) -> list[Outbound | Task]:
@@ -127,7 +123,7 @@ def on_lang(user: User, value: str, store: Store) -> list[Outbound | Task]:
 
 
 # ---------------------------------------------------------------------------
-# M1 step 3: text commands, parent's name, pairing code
+# Text commands, parent's name, pairing code
 # ---------------------------------------------------------------------------
 
 def lang_buttons(lang: str) -> list[Button]:
@@ -191,7 +187,7 @@ def on_code(user: User, text: str, store: Store, deps: Deps):
 
 
 # ---------------------------------------------------------------------------
-# M1 step 4: consent, stop, second contact
+# Consent, stop, second contact
 # ---------------------------------------------------------------------------
 
 def on_consent(user: User, code: str, store: Store, deps: Deps):
@@ -275,7 +271,7 @@ def on_accept2(user: User, code: str, store: Store, deps: Deps):
 
 
 # ---------------------------------------------------------------------------
-# M2 steps 5, 6, 8: image in, question out, decode in the background
+# Image in, question out, decode in the background
 # ---------------------------------------------------------------------------
 
 def claim_buttons(check_id: str, lang: str) -> list[Button]:
@@ -363,39 +359,8 @@ def on_close_check(event, store, deps):
 
 
 # ---------------------------------------------------------------------------
-# M2 step 7 and 9: the verdict, and "I already paid"
+# The verdict, and "I already paid"
 # ---------------------------------------------------------------------------
-
-def _temporary_decide(claim: Claim, decode: DecodeResult | None) -> Verdict:
-    """Stand-in for Owner A's verdict.decide(), following SRS 2.2.3 rules V-1..V-5.
-    Used ONLY while verdict.decide() still raises NotImplementedError."""
-    is_duitnow = decode is not None and decode.kind == QrKind.PAYMENT_DUITNOW
-    if claim == Claim.OFFICIAL:                                         # V-1
-        return Verdict(Level.STOP, "V-1", "v.stop.official", notify_child=True)
-    if claim == Claim.COURIER:
-        if is_duitnow and decode.is_personal is True:                   # V-2
-            return Verdict(Level.STOP, "V-2", "v.stop.courier_personal", notify_child=True)
-        if not is_duitnow:                                              # V-3
-            return Verdict(Level.VERIFY, "V-3", "v.verify.courier_unreadable")
-        return Verdict(Level.VERIFY, "V-4", "v.verify.courier")         # V-4
-    return Verdict(Level.VERIFY, "V-5", "v.verify.known_person")        # V-5
-
-
-def decide_verdict(claim: Claim, decode: DecodeResult | None) -> Verdict:
-    """Use Owner A's rules when they exist, otherwise the temporary ones."""
-    try:
-        return verdict_rules.decide(claim, decode)
-    except NotImplementedError:
-        return _temporary_decide(claim, decode)
-
-
-def evidence_id(n: int) -> str:
-    """0 reports -> ev.none, 1-2 -> ev.few, 3 or more -> ev.many (FR-15)."""
-    try:
-        return verdict_rules.evidence_message_id(n)
-    except NotImplementedError:
-        return "ev.none" if n == 0 else ("ev.few" if n < SEVERAL else "ev.many")
-
 
 def on_claim(user: User, value: str, check_id: str, store: Store, deps: Deps):
     """The parent tapped who asked them to pay. Build ONE verdict message (FR-09..FR-12)."""
@@ -412,7 +377,7 @@ def on_claim(user: User, value: str, check_id: str, store: Store, deps: Deps):
 
     decode = check.decode                       # None if the decode has not finished
     kind = decode.kind if decode else QrKind.UNREADABLE
-    v = decide_verdict(claim, decode)
+    v = verdict_rules.decide(claim, decode)
     name = decode.payee_name if decode and decode.payee_name else render("v.unknown_name", lang)
     a = addr(user)
 
@@ -427,7 +392,7 @@ def on_claim(user: User, value: str, check_id: str, store: Store, deps: Deps):
         lines.append(render(note, lang))
     if decode and decode.report_key:            # reports only add a line, never change the level
         n = store.count_scam_reports(decode.report_key)
-        lines.append(render(evidence_id(n), lang, n=n))
+        lines.append(render(verdict_rules.evidence_message_id(n), lang, n=n))
     has_contact = bool(store.get_links(user.user_id))
     alert_now = v.level == Level.STOP and has_contact and not check.is_practice
     if alert_now:
@@ -472,7 +437,7 @@ def on_paid(user: User, check_id: str, store: Store, deps: Deps):
 
 
 # ---------------------------------------------------------------------------
-# M3: reports
+# Reports
 # ---------------------------------------------------------------------------
 
 def on_report(user: User, value: str, check_id: str, store: Store, deps: Deps):

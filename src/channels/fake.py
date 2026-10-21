@@ -1,4 +1,4 @@
-"""In-memory channel for tests and scripts/chat_sim.py. COMPLETE."""
+"""In-memory channel for tests and scripts/chat_sim.py."""
 
 from __future__ import annotations
 

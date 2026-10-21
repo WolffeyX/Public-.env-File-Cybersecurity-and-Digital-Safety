@@ -1,17 +1,16 @@
-"""EMV QR parsing (Owner A, Milestone 1).
+"""EMV QR parsing (Owner A).
 
-Port parse_tlv() and validate_crc() from the Colab notebook, then add the
-nested parser and compute_crc(). Return data, never print.
+Parses tag-length-value data, checks and computes the CRC, and parses the
+nested tag 26. Returns data, never prints.
 
-Known fix from testing: tag 01 "11" = STATIC, "12" = DYNAMIC
-(the notebook had these swapped).
+Tag 01: "11" = STATIC, "12" = DYNAMIC.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-DUITNOW_ID = "A0000006150001"   # tag 26 sub 00 in every sample (TBV, SRS AS-3)
+DUITNOW_ID = "A0000006150001"   # tag 26 sub 00 in every sample (SRS AS-3)
 
 
 @dataclass

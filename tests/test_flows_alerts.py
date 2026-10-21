@@ -1,4 +1,4 @@
-"""Milestone 3 tests: family alerts, escalation, reports (Owner C)."""
+"""Tests: family alerts, escalation, reports (Owner C)."""
 
 try:
     from tests.fakes import Clock, InMemoryStore, ev, make_deps

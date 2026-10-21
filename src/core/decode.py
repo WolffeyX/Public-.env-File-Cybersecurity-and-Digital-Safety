@@ -1,4 +1,4 @@
-"""Image -> QR text (Owner A, Milestone 2). SDD section 5.2."""
+"""Image -> QR text (Owner A). SDD section 5.2."""
 
 from __future__ import annotations
 
