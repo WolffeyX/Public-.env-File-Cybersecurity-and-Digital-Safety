@@ -7,7 +7,7 @@
 | **Version**          | 1.2, 21 Oct 2026                                                                                                                                                               |
 | **Changes in 1.1**   | Telegram is the only _channel_. WhatsApp-only constraints were removed. NFR-UI-03 now allows 10 lines and 700 characters. The third question button is "Keluarga/Kawan/Kedai". |
 | **Status**           | Final                                                                                                                                                                          |
-| **Related document** | Software Design Document (SDD) v1.1, which describes **how** the system meets these requirements                                                                               |
+| **Related document** | Software Design Document (SDD) v1.2, which describes **how** the system meets these requirements                                                                               |
 | **Template**         | Follows the SRS template from an educational institution curriculum                                                                                                            |
 
 ### How to read this document
@@ -383,7 +383,7 @@ Times are measured from the moment the _channel_ delivers the user's message to 
 | Channels               | Telegram Bot API                                                         | Same. WhatsApp is future work (SDD section 17).               |
 | Programming language   | Python 3.12                                                              | Python 3.12                                                   |
 | Cloud platform         | Amazon Web Services, serverless (Lambda, API Gateway, SQS, DynamoDB)     | Same                                                          |
-| Region                 | Asia Pacific (Malaysia) if available, otherwise Asia Pacific (Singapore) | Same                                                          |
+| Region                 | Asia Pacific (Singapore)                                                 | Same                                                          |
 | Database               | Amazon DynamoDB                                                          | Same                                                          |
 | Infrastructure as code | AWS SAM                                                                  | Same                                                          |
 | Testing                | pytest, moto, a simulated channel                                        | Not applicable                                                |
@@ -413,7 +413,7 @@ Times are measured from the moment the _channel_ delivers the user's message to 
 | #    | Reference                                                                                                                                                                                                        |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [1]  | Hackathon brief: Cybersecurity track (problem statement, RM2.7 billion figure, MVP and stretch goals)                                                                                                            |
-| [2]  | Semak Dulu Software Design Document v1.0, 14 Oct 2026 (`docs/SDD.md`)                                                                                                                                            |
+| [2]  | Semak Dulu Software Design Document v1.2, 21 Oct 2026 (`docs/SDD.md`)                                                                                                                                            |
 | [3]  | T. Anwar, "TFB2014 Software Engineering and Human Computer Interfaces, Week 04b: Specifying Requirements", lecture slides, Faculty of Science, Management and Computing, 2026 (slides © H. Lichter, RWTH Aachen) |
 | [4]  | S. Robertson, J. Robertson, _Mastering the Requirements Process_, Addison-Wesley, 1999                                                                                                                           |
 | [5]  | IEEE Std 830-1998, _IEEE Recommended Practice for Software Requirements Specifications_                                                                                                                          |

@@ -6,17 +6,10 @@
 | **Track**            | Cybersecurity: scam prevention for vulnerable Malaysians                                                                                      |
 | **Version**          | 1.2, 21 Oct 2026                                                                                                                              |
 | **Changes in 1.1**   | Telegram is the only channel (D-20). WhatsApp-only assumptions, risks and interfaces are closed or removed. The build-plan chart was removed. |
+| **Changes in 1.2**   | Open items, the team timeline and WhatsApp leftovers were removed. Message text, message IDs, rule IDs and data names now match the code. |
 | **Status**           | Final                                                                                                                                         |
-| **Related document** | Software Requirements Specification (SRS) v1.1: FR-01 to FR-27, DR-01 to DR-09, NFR-xx-nn                                                     |
+| **Related document** | Software Requirements Specification (SRS) v1.2: FR-01 to FR-27, DR-01 to DR-09, NFR-xx-nn                                                     |
 | **Template**         | Follows Atlassian's software design document structure (sections 1 to 8), plus extra sections the build needs (sections 9 to 17)              |
-
-**How to read the tags in this document**
-
-| Tag          | Meaning                                                                                             |
-| ------------ | --------------------------------------------------------------------------------------------------- |
-| `[VERIFY]`   | Based on memory or a small test. Check it against official docs or more tests before relying on it. |
-| `[OPEN]`     | A decision the team still has to make.                                                              |
-| `[PROPOSED]` | A recommendation. Change it if the team disagrees.                                                  |
 
 All diagrams are in the `diagrams/` folder. Each has an editable Mermaid source (`.mmd`) and a rendered image (`.png`) for slides.
 
@@ -38,7 +31,7 @@ All diagrams are in the `diagrams/` folder. Each has an editable Mermaid source 
 12. [Deployment, environments and monitoring](#12-deployment-environments-and-monitoring)
 13. [Team and build plan](#13-team-and-build-plan)
 14. [Requirements traceability](#14-requirements-traceability)
-15. [Risks and open items](#15-risks-and-open-items)
+15. [Known limitations](#15-known-limitations)
 16. [Decisions log](#16-decisions-log)
 17. [Future work](#17-future-work)
 
@@ -48,15 +41,14 @@ All diagrams are in the `diagrams/` folder. Each has an editable Mermaid source 
 
 ### 1.1 Purpose of this document
 
-This document explains **how** Semak Dulu will be built. It turns the requirements in the SRS into a design that the team can split up and build in parallel, starting 14 Oct 2026, with the feature freeze on 19 Oct and submission on 21 Oct.
+This document explains **how** Semak Dulu is built. It turns the requirements in the SRS into a design that the team can split up and build in parallel.
 
 ### 1.2 Audience
 
 | Reader                      | What they need from this document                                                         |
 | --------------------------- | ----------------------------------------------------------------------------------------- |
 | Developers (team of 3 to 4) | Which module they own, the interfaces between modules, and the rules the code must follow |
-| Testers and demo owner      | The scenarios to test and demo (section 11)                                               |
-| Hackathon judges            | The architecture, the reasons behind it, and how it handles risk                          |
+| Testers                     | The scenarios to test and demo (section 11)                                               |
 
 ### 1.3 Background
 
@@ -145,7 +137,7 @@ This shows who uses the system and what it connects to.
 | Worker Lambda (zip + layer) | Runs the core logic and QR decoding, sends replies                                      | QR libraries (zxing-cpp, Pillow) come from a Lambda layer of ready-made Linux wheels, so no Docker is needed (D-16) |
 | DynamoDB (single table)     | Stores all data, with automatic expiry (TTL)                                            | Pay per use, no servers, and expiry handles privacy cleanup                                                         |
 | SSM Parameter Store         | Holds secrets (tokens, app secret, report pepper)                                       | Keeps secrets out of the code                                                                                       |
-| CloudWatch                  | Logs and alarms                                                                         | Lets the team see errors during the demo week                                                                       |
+| CloudWatch                  | Logs and alarms                                                                         | Lets the team see errors                                                                       |
 
 ### 2.4 Design patterns and why we chose them
 
@@ -195,7 +187,7 @@ These are targets to measure during testing, not guarantees.
 | Secrets                | AWS SSM Parameter Store (SecureString)                                   |                                                                                                                 |
 | Infrastructure as code | AWS SAM                                                                  | One `template.yaml`, deploy with `sam build && sam deploy`                                                      |
 | Testing                | pytest, moto (fake AWS), a fake channel                                  |                                                                                                                 |
-| Region                 | Asia Pacific (Malaysia) if available to the account, otherwise Singapore | `[VERIFY]` region availability for all services used                                                            |
+| Region                 | Asia Pacific (Singapore), `ap-southeast-1`                               |                                                                                                                 |
 
 ---
 
@@ -211,13 +203,15 @@ All data lives in **one DynamoDB table**. Each item has a partition key (`PK`) a
 
 | Item          | PK                    | SK                                 | Main fields                                                                                 | Deleted after                           |
 | ------------- | --------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------- |
-| User          | `USER#<channel>#<id>` | `PROFILE`                          | `role` (parent, child, second), `lang` (ms, en), `address_as` ("Mak", "Ayah"), `consent_at` | Never (until the user sends "Berhenti") |
-| Link          | `USER#<parent>`       | `LINK#PRIMARY` or `LINK#SECONDARY` | `contact_id`, `status`, `consent_at`                                                        | Never (until unlinked)                  |
+| User          | `USER#<user_id>`      | `PROFILE`                          | `role` (parent, child, second), `lang` (ms, en), `address_as` ("Mak", "Ayah"), `consent_at` | Never (until the user sends "Berhenti") |
+| Link          | `USER#<parent>`       | `LINK#PRIMARY` or `LINK#SECOND`    | `contact_id`, `status`, `consent_at`                                                        | Never (until unlinked)                  |
 | Pairing code  | `PAIR#<code>`         | `PAIR`                             | `owner_id`, `target_role`, `address_as`                                                     | 24 hours                                |
-| Pending check | `USER#<parent>`       | `CHECK#<ulid>`                     | `status` (decoding, decoded, failed, answered), `claim`, `decode_result`                    | 15 minutes                              |
+| Pending check | `USER#<parent>`       | `CHECK#<check_id>`                 | `status` (decoding, decoded, failed, answered), `claim`, `decode_result`                    | 15 minutes                              |
 | Alert         | `ALERT#<check_id>`    | `STATE`                            | `type` (STOP, PAID), `stage`, `acked_by`, timestamps                                        | 7 days                                  |
 | Report        | `REPORT#<report_key>` | `REP#<reporter_hash>`              | `reason`, `category`, `created_at`                                                          | Kept (no personal data inside)          |
 | Dedupe marker | `DEDUP#<msg_id>`      | `-`                                | none                                                                                        | 24 hours                                |
+
+`<user_id>` is the channel plus the Telegram chat ID, for example `tg:123456789`. No phone numbers are stored.
 
 **Index:** one global secondary index (`GSI1`) on Link items (`GSI1PK = USER#<contact>`) so the bot can find "which parent is this child linked to?" when the child taps "Saya uruskan".
 
@@ -260,8 +254,8 @@ The team decoded 5 real QR codes (3 different personal QRs from bank apps, 1 bus
 | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | Tag 01 is `11` on static (reusable) QRs and `12` on the dynamic QR that had an amount                            | Use tag 01 for static/dynamic. Show an amount only when tag 54 exists.       |
 | All 3 personal QRs have merchant category code (MCC) `0000`. Both business QRs have real codes (`7311`, `4722`). | `is_personal = True` only for a DuitNow QR with MCC `0000`.                  |
-| Tag 26 sub-field `00` is `A0000006150001` in every sample                                                        | Use it to recognise DuitNow QRs `[VERIFY]` against PayNet's specification.   |
-| Tag 26 sub-field `01` (6 digits) looks like a bank code, sub-field `02` like an account or merchant reference    | Build the report key from these `[VERIFY]` meaning.                          |
+| Tag 26 sub-field `00` is `A0000006150001` in every sample                                                        | Use it to recognise DuitNow QRs (SRS AS-3).                                  |
+| Tag 26 sub-field `01` (6 digits) looks like a bank code, sub-field `02` like an account or merchant reference    | Build the report key from these.                                             |
 | Sub-field `03` and tag 62 appear only in some samples, and may identify a person                                 | Left out of the report key and never stored.                                 |
 | The dynamic QR's sub-field `02` is a one-time bill reference                                                     | No report key for dynamic QRs.                                               |
 | Every sample has a valid checksum                                                                                | A scammer's QR has a valid checksum too, so it never makes a verdict softer. |
@@ -275,13 +269,13 @@ The team decoded 5 real QR codes (3 different personal QRs from bank apps, 1 bus
 | Payee name, amount  | Inside the pending check only               | 15 minutes                                   | Shown in the verdict                                                                                      |
 | Raw account numbers | **No**                                      | n/a                                          | Only a scrambled report key is kept                                                                       |
 | Report key          | Yes                                         | Kept                                         | Needed to count reports. It is an HMAC (a keyed hash), so it can't be reversed without the secret pepper. |
-| Phone numbers       | Yes, in user and link items                 | Until the user sends "Berhenti"              | Needed to send messages and alerts                                                                        |
+| Telegram chat IDs   | Yes, in user and link items                 | Until the user sends "Berhenti"              | Needed to send messages and alerts                                                                        |
 | Family code word    | **Never**                                   | n/a                                          | Agreed out loud during setup                                                                              |
 | Logs                | No names, payloads or numbers               | CloudWatch default retention, set to 14 days | Debugging only                                                                                            |
 
 ### 3.7 Data validation rules
 
-- Reject images larger than a set limit (for example 5 MB) before decoding `[PROPOSED]`.
+- Reject images larger than 5 MB before decoding, and shrink images whose longest side is over 2000 px.
 - The TLV parser rejects tags or lengths that aren't digits, or lengths that go past the end of the payload.
 - Pairing codes: 6 characters from an alphabet without look-alike characters (no `0/O`, `1/I`), single use, 24-hour expiry.
 - Button IDs are checked against the expected format and the user's current state. A button for an old or expired check gets a polite "this check has expired, please forward the QR again".
@@ -307,7 +301,7 @@ These are fixed on day 1 so each person can build against them in parallel.
 @dataclass
 class InboundEvent:
     channel: str             # "tg" (or "sim" locally)
-    user_id: str             # phone number (wa) or chat id (tg)
+    user_id: str             # "tg:<chat id>" (or "sim:<name>" locally)
     msg_id: str              # used to skip duplicates
     kind: str                # "text" | "image" | "button"
     text: str | None
@@ -349,12 +343,14 @@ The worker calls `handle_event`, sends each returned message, and puts each time
 | ----------------------------------------- | ---------------------------------------------- |
 | `claim:OFFICIAL:01JA…`                    | Parent says a bank, police or court asked      |
 | `claim:COURIER:01JA…`                     | Parent says a courier asked                    |
-| `claim:KNOWN_PERSON:01JA…`                | Parent says a relative, friend or seller asked |
+| `claim:KNOWN_PERSON:01JA…`                | Parent says family, a friend or a shop asked   |
 | `paid:yes:01JA…`                          | Parent says they already paid                  |
-| `report:open:01JA…` / `report:SCAM:01JA…` | Report flow                                    |
+| `report:open:01JA…` / `report:scam_pattern:01JA…` | Report flow                                    |
 | `ack:handle:<alert_id>`                   | Child or second contact taps "Saya uruskan"    |
 | `consent:yes:<pair_code>`                 | Parent agrees to alerts during setup           |
-| `lang:ms` / `lang:en`                     | Language choice                                |
+| `accept2:yes:<pair_code>`                 | Second contact accepts the invitation          |
+| `lang:ms:-` / `lang:en:-`                 | Language choice                                |
+| `stop:confirm:-`                          | User confirms "Berhenti" (delete their data)   |
 
 ### 4.4 Error handling at the interfaces
 
@@ -362,8 +358,8 @@ The worker calls `handle_event`, sends each returned message, and puts each time
 | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | Webhook signature is wrong                                                | Ingest returns 401 and nothing is queued                                                                 |
 | Same message arrives twice                                                | Second copy is skipped (FIFO dedupe and the dedupe marker)                                               |
-| Media download fails                                                      | Retry once, then tell the parent "we couldn't open the picture, please send it again"                    |
-| Sending a reply fails                                                     | The worker raises an error, SQS retries the event, and after 3 failures it goes to the dead-letter queue |
+| Media download fails                                                      | The check is treated as unreadable. The parent still gets a verdict, with the "couldn't read" line (FR-12). |
+| Sending a reply fails                                                     | The worker logs `worker.error`, which fires a CloudWatch alarm. The event is not retried (D-18).            |
 | Child alert can't be delivered (for example, the contact blocked the bot) | The parent's STOP has already been sent. The failure is logged and the escalation timer still runs.      |
 | Unknown text from a user                                                  | A short help message with the main action: "Forward the QR picture to me"                                |
 
@@ -384,9 +380,13 @@ The worker calls `handle_event`, sends each returned message, and puts each time
 | `core/flows.py`        | Main entry point: setup, check, tap, ack, paid, report                   | `InboundEvent`                      | `list[Outbound]`      | All of the above   |
 | `core/messages.py`     | Load message text, fill in variables                                     | Message ID, language, values        | Text                  | `messages/*.yaml`  |
 | `core/store.py`        | Read and write data                                                      | Domain objects                      | Domain objects        | boto3 (production) |
-| `channels/telegram.py` | Talks to Telegram                                                        | HTTP                                | `InboundEvent`, sends | requests or httpx  |
+| `core/types.py`        | Shared data types: `InboundEvent`, `Outbound`, `DecodeResult`, `Verdict`, enums | None | None | None |
+| `channels/telegram.py` | Talks to Telegram                                                        | HTTP                                | `InboundEvent`, sends | httpx              |
+| `channels/base.py`     | The `Channel` interface every adapter follows                            | None                                | None                  | None               |
+| `channels/fake.py`     | In-memory channel for tests and `scripts/chat_sim.py`                    | Text or image file                  | `InboundEvent`        | None               |
 | `handlers/ingest.py`   | Lambda: verify and queue                                                 | API Gateway event                   | SQS message           | channels           |
 | `handlers/worker.py`   | Lambda: process and send                                                 | SQS message                         | Messages and timers   | core, channels     |
+| `handlers/config.py`   | Settings, secrets from SSM, safe logging                                 | Environment variables, SSM          | Config values         | boto3              |
 
 ### 5.2 QR decoding pipeline (`decode.py`, `classify.py`)
 
@@ -401,8 +401,6 @@ The worker calls `handle_event`, sends each returned message, and puts each time
 5. For DuitNow QRs, read the fields and decide `is_personal` and `report_key`.
 6. Discard the image.
 
-**Starting point:** the team's Colab notebook already has a working TLV parser and checksum check. Two fixes before reuse: swap the tag 01 labels (`11` = static, `12` = dynamic), and return data instead of printing. The missing `inspect_url` function isn't needed in the MVP, since URL QRs just get a fixed warning.
-
 ### 5.3 Verdict engine (`verdict.py`)
 
 ![Verdict decision flow](diagrams/07-verdict.png)
@@ -415,31 +413,31 @@ class Level(Enum):
 @dataclass
 class Verdict:
     level: Level
-    reason_code: str         # e.g. "R1_official"
+    rule: str                # "V-1" .. "V-5" (SRS 2.2.3)
     message_id: str          # e.g. "v.stop.official"
     params: dict             # payee_name, amount, address_as...
     notify_child: bool       # True only when level is STOP
 ```
 
-**Rules (the first match wins):**
+**Rules (the first match wins). The IDs are the same as the SRS decision table and the code:**
 
 | Rule | When                                                  | Verdict   | Message idea                                                                                                       |
 | ---- | ----------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
-| R1   | Claim is bank, police or court                        | 🛑 STOP   | "Banks, police and courts never ask you to pay by QR. Don't pay. Hang up." `[VERIFY]` cite a bank or PDRM advisory |
-| R2   | Claim is courier, and the QR is a personal account    | 🛑 STOP   | "The caller says courier, but this account is in a personal name."                                                 |
-| R3   | Claim is courier, and the QR couldn't be read         | 🟡 VERIFY | "We couldn't read the QR. Don't pay yet."                                                                          |
-| R4   | Claim is courier, and the QR is a business or unknown | 🟡 VERIFY | Show the merchant name, check it with the courier's official app                                                   |
-| R5   | Claim is relative, friend or seller                   | 🟡 VERIFY | Show the payee name. Call back on a saved number and ask the family code word.                                     |
+| V-1  | Claim is bank, police or court                        | 🛑 STOP   | "Banks, police and courts don't ask for payment by QR. Hang up now." |
+| V-2  | Claim is courier, and the QR is a personal account    | 🛑 STOP   | "The caller says courier, but this account is in a personal name." |
+| V-3  | Claim is courier, and the QR couldn't be read or isn't a DuitNow QR | 🟡 VERIFY | "We couldn't check this QR." Check the payment in the courier's official app. |
+| V-4  | Claim is courier, and the QR is a business or unknown | 🟡 VERIFY | Show the merchant name, check it in the courier's official app |
+| V-5  | Claim is family, friend or shop                       | 🟡 VERIFY | Show the payee name, then one step for each: family, call back on a saved number and ask the family code word. Friend, call their saved number and don't reply in the same chat. Shop, check the shop name matches the name on the QR. |
 
 **Report wording (added to any verdict, never changes the level):**
 
 | Distinct scam reports for this QR | Extra line                                                             |
 | --------------------------------- | ---------------------------------------------------------------------- |
-| 0                                 | "No reports found, but that doesn't mean it is safe."                  |
+| 0                                 | "No reports in Semak Dulu, but that doesn't mean it is safe."                  |
 | 1 to 2                            | "This account has 1 (or 2) unconfirmed reports. Be careful."           |
-| 3 or more `[PROPOSED]`            | "Several people have reported this account." Never "penipu" (scammer). |
+| 3 or more                         | "Several people have reported this account." Never "penipu" (scammer). |
 
-Every verdict also offers two buttons: **"Saya sudah bayar"** (I already paid) and **"Laporkan QR ini"** (report this QR).
+Every verdict also offers two buttons: **"Saya sudah bayar"** (I already paid) and **"Laporkan QR ini"** (report this QR). Every VERIFY verdict ends with a link to PDRM's Semak Mule website (FR-17).
 
 ### 5.4 Child alert and escalation (`escalation.py`)
 
@@ -447,7 +445,7 @@ Every verdict also offers two buttons: **"Saya sudah bayar"** (I already paid) a
 
 **How it works:**
 
-1. On a STOP, the parent is told first: "Jangan bayar. Letak telefon. {child} akan telefon sebentar lagi."
+1. On a STOP, the parent gets the verdict first. It ends with: "Saya sudah maklumkan anak Mak. Dia akan telefon sebentar lagi."
 2. The primary contact gets the alert, with a **"Saya uruskan"** (I'm handling it) button.
 3. A timer is set for 180 seconds.
 4. If nobody has tapped by then and a second contact exists, the second contact gets the alert. Another timer is set.
@@ -460,22 +458,22 @@ Every stage change is a **conditional update** in DynamoDB ("only move to SECOND
 
 | Type                 | Trigger                        | Content                                                                                                                        |
 | -------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| STOP (QR decoded)    | R1 or R2 with a readable QR    | Who the caller claimed to be, that the account is personal (if known), that we don't know if money was sent, ask the code word |
-| STOP (QR unreadable) | R1 with a failed decode        | Same, but says the QR couldn't be read                                                                                         |
+| STOP (QR decoded)    | V-1 or V-2 with a readable QR  | Who the caller claimed to be, that the account is personal (if known), that we don't know if money was sent, ask the code word |
+| STOP (QR unreadable) | V-1 with a failed decode       | Same, but says the QR couldn't be read                                                                                         |
 | PAID                 | Parent taps "Saya sudah bayar" | Urgent: call the parent now, help them call the bank and 997                                                                   |
 
 ### 5.5 Reports (`reports.py`)
 
 1. After a verdict, the user can tap "Laporkan QR ini".
-2. The bot shows 3 reasons:
+2. The bot says the report stays inside Semak Dulu (for an official report, call 997) and shows 3 reasons:
    - "Pemanggil menyamar sebagai bank, polis, mahkamah atau kurier" (scam pattern: **counts**)
    - "Penjual atau orang itu tidak jujur" (dispute: stored, **doesn't count**)
    - "Lain-lain" (other: stored, **doesn't count**)
 3. Only static DuitNow QRs can be reported (they have a stable report key). For others, the bot explains it can't add this one.
-4. One report per phone number per QR, enforced by a conditional write.
+4. One report per user per QR, enforced by a conditional write.
 5. **Report key** = `HMAC-SHA256(pepper, network_id | sub01 | sub02)`. The pepper is a secret in SSM, so the key can't be turned back into an account number.
 
-**Limit to state honestly in the pitch:** someone with many phone numbers can still add fake reports. That's why reports only add wording and never cause a STOP.
+**Known limit:** someone with many Telegram accounts can still add fake reports. That's why reports only add wording and never cause a STOP.
 
 ### 5.6 Pending checks and timeouts (`flows.py`)
 
@@ -510,7 +508,8 @@ The child also saves the bot as a contact (for example "Semak Dulu"), pins the c
 
 ```
 ┌──────────────────────────────────────┐
-│ Terima kasih. Sebelum bayar:          │
+│ Terima kasih. Sebelum bayar atau      │
+│ pindahkan wang:                       │
 │ Siapa yang minta Mak bayar?           │
 │                                       │
 │ [ Bank/Polis/Mahkamah ]               │
@@ -519,33 +518,48 @@ The child also saves the bot as a contact (for example "Semak Dulu"), pins the c
 └──────────────────────────────────────┘
 ```
 
-**Step 2a: STOP verdict (rule R1)**
+**Step 2a: STOP verdict (rule V-1, a QR with no reports)**
 
 ```
 ┌──────────────────────────────────────┐
 │ 🛑 JANGAN BAYAR.                       │
-│ Bank, polis dan mahkamah tidak akan   │
-│ minta bayaran melalui kod QR.         │
-│ Letak telefon sekarang. Saya sudah    │
-│ maklumkan anak Mak.                   │
+│ Bank, polis dan mahkamah tidak minta  │
+│ bayaran melalui kod QR.               │
+│ Letak telefon sekarang.               │
+│ Tiada laporan dalam Semak Dulu, tetapi│
+│ itu tidak bermakna ia selamat.        │
+│ Saya sudah maklumkan anak Mak. Dia    │
+│ akan telefon sebentar lagi.           │
 │                                       │
-│ [ Saya sudah bayar ] [ Laporkan QR ]  │
+│ [ Saya sudah bayar ]                  │
+│ [ Laporkan QR ini ]                   │
 └──────────────────────────────────────┘
 ```
 
-**Step 2b: VERIFY verdict (rule R5)**
+**Step 2b: VERIFY verdict (rule V-5)**
 
 ```
 ┌──────────────────────────────────────┐
-│ 🟡 Tunggu dulu.                        │
+│ 🟡 Tunggu dulu, jangan bayar dahulu.   │
 │ Nama pada QR: AHMAD BIN ...           │
-│ Kami tidak jumpa laporan, tetapi itu  │
-│ tidak bermakna ia selamat.            │
-│ Jangan bayar dahulu. Telefon semula   │
-│ orang itu guna nombor yang Mak sudah  │
-│ simpan, dan tanya kod rahsia keluarga.│
+│ Jika ahli keluarga: telefon semula    │
+│ guna nombor yang Mak sudah simpan,    │
+│ dan tanya kod rahsia keluarga.        │
+│ Jika kawan/kenalan: telefon dia guna  │
+│ nombor yang Mak sudah simpan. Jangan  │
+│ balas dalam chat yang sama, dan       │
+│ jangan guna nombor baru yang dia beri.│
+│ Akaun kawan mungkin telah digodam.    │
+│ Jika kedai: pastikan nama kedai sama  │
+│ dengan nama pada QR.                  │
+│ Tiada laporan dalam Semak Dulu, tetapi│
+│ itu tidak bermakna ia selamat.        │
+│ Anda juga boleh semak akaun di laman  │
+│ Semak Mule PDRM:                      │
+│ https://semakmule.rmp.gov.my          │
 │                                       │
-│ [ Saya sudah bayar ] [ Laporkan QR ]  │
+│ [ Saya sudah bayar ]                  │
+│ [ Laporkan QR ini ]                   │
 └──────────────────────────────────────┘
 ```
 
@@ -553,35 +567,36 @@ The child also saves the bot as a contact (for example "Semak Dulu"), pins the c
 
 ```
 ┌──────────────────────────────────────┐
-│ ⚠️ AMARAN: Telefon Mak sekarang.       │
+│ ⚠️ AMARAN: Telefon Mak sekarang.      │
 │ Mak baru hantar kod QR untuk disemak. │
-│ Pemanggil mengaku dari "bank", tetapi │
-│ akaun penerima ialah akaun peribadi.  │
+│ Pemanggil mengaku dari bank, polis    │
+│ atau mahkamah. Akaun penerima ialah   │
+│ akaun peribadi.                       │
 │ Kami tidak tahu sama ada wang sudah   │
-│ dihantar. Tanya kod rahsia keluarga.  │
-│ Jika sudah bayar: hubungi bank dan    │
-│ 997 serta-merta.                      │
+│ dihantar.                             │
+│ Tanya kod rahsia keluarga. Jika sudah │
+│ bayar: hubungi bank dan 997 segera.   │
 │                                       │
 │ [ Saya uruskan ]                      │
 └──────────────────────────────────────┘
 ```
 
-All BM text must be reviewed by a native speaker before the demo.
-
 ### 6.4 Message catalogue
 
-All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code never builds sentences itself.
+All user-facing text lives in `src/messages/ms.yaml` and `src/messages/en.yaml`. Code never builds sentences itself.
 
-| Group           | Message IDs                                                                                                      |
-| --------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Setup           | `s.welcome`, `s.lang`, `s.ask_address`, `s.pair_code`, `s.consent`, `s.linked`, `s.practice`, `s.demo_verdict`   |
-| Question        | `q.who_asked`, `q.reminder`, `q.expired`                                                                         |
-| Verdicts        | `v.stop.official`, `v.stop.courier_personal`, `v.verify.courier`, `v.verify.unreadable`, `v.verify.known_person` |
-| Decode problems | `e.no_qr`, `e.unreadable`, `e.url`, `e.unknown_scheme`, `e.not_image`                                            |
-| Reports         | `r.choose_reason`, `r.thanks`, `r.not_reportable`, `r.already_reported`, `ev.none`, `ev.few`, `ev.many`          |
-| Alerts          | `a.child.stop_decoded`, `a.child.stop_unreadable`, `a.child.paid`, `a.ack_done`, `a.parent.unacked`              |
-| Paid            | `p.paid` (bank first, then 997, then 999 if in danger, then a police report)                                     |
-| Help            | `h.help`, `h.stop_confirm`                                                                                       |
+| Group           | Message IDs |
+| --------------- | ----------- |
+| Setup           | `s.choose_lang`, `s.welcome`, `s.ask_address`, `s.pair_code`, `s.code_invalid`, `s.consent`, `s.linked_parent`, `s.linked_child`, `s.practice_invite`, `s.lang_changed`, `s.default_address` |
+| Second contact  | `s.second_code`, `s.second_exists`, `s.second_invite`, `s.second_linked`, `s.second_linked_primary`, `s.not_primary` |
+| Question        | `q.who_asked`, `q.reminder`, `q.expired` |
+| Verdicts        | `v.stop.official`, `v.stop.courier_personal`, `v.verify.courier`, `v.verify.courier_unreadable`, `v.verify.known_person`, `v.told_contact`, `v.amount`, `v.unknown_name`, `v.practice_prefix`, `v.semak_mule` |
+| Decode problems | `e.no_qr`, `e.unreadable`, `e.url`, `e.unknown_scheme` |
+| Reports         | `r.choose_reason`, `r.thanks`, `r.not_reportable`, `r.already_reported`, `ev.none`, `ev.few`, `ev.many` |
+| Alerts          | `a.child.stop`, `a.child.paid`, `a.qr_personal`, `a.qr_business`, `a.qr_unreadable`, `a.ack_done`, `a.ack_other`, `a.parent.unacked` |
+| Paid            | `p.paid` (bank first, then 997, then 999 if in danger, then a police report) |
+| Help and stop   | `h.help`, `h.stop_confirm`, `h.stopped`, `h.contact_left`, `h.rate_limited` |
+| Labels          | Claim labels `c.*` and button labels `btn.*` |
 
 ### 6.5 Accessibility rules for seniors
 
@@ -605,14 +620,9 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 
 | #   | Assumption                                                                                           | If it's wrong                                                             |
 | --- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| A1  | Banks, police and courts never ask people to pay by QR over a call `[VERIFY]`                        | R1 needs rewording. Find an official advisory to cite.                    |
-| A2  | MCC `0000` means a personal DuitNow account (true for 3 of 3 bank-app samples)                       | Courier STOP could misfire. Only R2 uses it, and unknowns fall to VERIFY. |
-| A3  | `A0000006150001` identifies DuitNow `[VERIFY]`                                                       | DuitNow detection needs a different check.                                |
-| A4  | ~~WhatsApp reply buttons are limited to 3~~                                                          | Not applicable since v1.1: WhatsApp is not used.                          |
-| A5  | ~~The Meta test number can message a small set of registered phones~~                                | Not applicable since v1.1: WhatsApp is not used.                          |
-| A6  | ~~Bot-started WhatsApp messages need the user to have messaged in the last 24 hours, or a template~~ | Not applicable since v1.1: WhatsApp is not used.                          |
-| A7  | 997 is the National Scam Response Centre number `[VERIFY]` hours and scope                           | Change the paid message.                                                  |
-| A8  | The parent will forward the QR (helped by the setup visit and practice run)                          | Admitted limit: the bot can't help a parent who never forwards.           |
+| A1  | MCC `0000` means a personal DuitNow account (true for 3 of 3 bank-app samples)                       | Courier STOP could misfire. Only V-2 uses it, and unknowns fall to VERIFY. |
+| A2  | `A0000006150001` identifies DuitNow                                                                  | DuitNow detection needs a different check.                                |
+| A3  | The parent will forward the QR (helped by the setup visit and practice run)                          | Admitted limit: the bot can't help a parent who never forwards.           |
 
 ### 7.2 External services and libraries
 
@@ -620,21 +630,20 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 | --------------------------------------------------------- | ------------------------------- | ------------------------------ |
 | Telegram Bot API                                          | Channel                         | Low                            |
 | AWS Lambda, API Gateway, SQS, DynamoDB, SSM, CloudWatch   | Hosting                         | Low                            |
-| `zxing-cpp`                                               | QR decoding                     | Packaging on Lambda `[VERIFY]` |
+| `zxing-cpp`                                               | QR decoding                     | Low (layer tested, D-16)       |
 | `Pillow`                                                  | Image clean-up                  | Low                            |
-| `boto3`, `httpx` (or `requests`), `PyYAML`, `python-ulid` | AWS access, HTTP, messages, IDs | Low                            |
+| `boto3`, `httpx`, `PyYAML`                                | AWS access, HTTP, messages      | Low                            |
 | `pytest`, `moto`                                          | Testing                         | Low                            |
 
 ### 7.3 Constraints
 
-- **Time:** build from 14 Oct, feature freeze 19 Oct, submit 21 Oct.
 - **Team:** 3 to 4 people.
-- **Cost:** expected to stay within AWS free-tier limits at hackathon volume `[VERIFY]`. The Telegram Bot API is free.
+- **Cost:** expected to stay within AWS free-tier limits at hackathon volume. The Telegram Bot API is free.
 - **Language:** BM required by the hackathon. English offered.
 
 ### 7.4 Compliance
 
-- **Malaysia's Personal Data Protection Act (PDPA):** we store phone numbers and a parent-child link, so the bot shows a short privacy notice at setup (what is kept, why, and how to delete it with "Berhenti") `[VERIFY]` exact obligations.
+- **Malaysia's Personal Data Protection Act (PDPA):** we store Telegram chat IDs and a parent-child link, so the bot shows a short privacy notice at setup (what is kept, why, and how to delete it with "Berhenti").
 - **Telegram:** a bot can only message people who started a chat with it, so every user opts in.
 - **Consent:** the parent must tap "Setuju" before any alert can be sent about them.
 
@@ -667,7 +676,7 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 | **SAM**                          | AWS Serverless Application Model, a tool to define and deploy the whole system from one file         |
 | **Idempotent**                   | Doing the same thing twice has the same effect as doing it once                                      |
 | **Semak Mule**                   | PDRM's public website for checking if an account or phone number has been reported                   |
-| **NSRC / 997**                   | National Scam Response Centre hotline `[VERIFY]`                                                     |
+| **NSRC / 997**                   | National Scam Response Centre hotline                                                                |
 
 ---
 
@@ -680,10 +689,10 @@ _Extra section: not in the Atlassian template, but essential for a cybersecurity
 | Threat                                       | What could happen                                       | How we handle it                                                                                                     |
 | -------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Fake webhook calls                           | Someone sends fake events to our URL                    | Every request's signature or secret token is checked before queueing                                                 |
-| Fake reports                                 | A rival or prankster reports an innocent seller         | Only scam-pattern reasons count, one report per number per QR, wording scales slowly, and reports never cause a STOP |
+| Fake reports                                 | A rival or prankster reports an innocent seller         | Only scam-pattern reasons count, one report per user per QR, wording scales slowly, and reports never cause a STOP |
 | Leaked data                                  | Database exposure reveals people's finances             | No images, no raw account numbers, report keys are HMACs, pending data expires in 15 minutes                         |
 | Leaked secrets                               | Tokens in code or logs                                  | Secrets only in SSM, never logged. Each Lambda has its own minimal permissions.                                      |
-| Message flooding                             | Someone spams the bot to run up costs                   | API Gateway throttling. Per-user rate limit `[PROPOSED]` (for example 10 checks per 10 minutes).                     |
+| Message flooding                             | Someone spams the bot to run up costs                   | API Gateway throttling. Per-user rate limit of 10 checks per 10 minutes (NFR-SE-05).                     |
 | Malicious QR content                         | A QR contains a harmful link                            | The bot never opens links found in QRs, it only warns                                                                |
 | Malicious images                             | Very large or broken files crash the decoder            | Size check first. Decoder errors are caught and become `unreadable`.                                                 |
 | Pairing code abuse                           | Someone guesses a code and links to a stranger's parent | Codes are random, single use, expire in 24 hours, and the parent must tap "Setuju"                                   |
@@ -692,8 +701,7 @@ _Extra section: not in the Atlassian template, but essential for a cybersecurity
 ### 9.2 Privacy rules for the team
 
 - Never commit real QR payloads, names or account numbers. Test fixtures use fake values with a recomputed checksum.
-- Clear notebook outputs before committing (the current Colab notebook still shows a real name).
-- Logs show only the first 4 characters of a hash for any user ID.
+- Logs show only the first 8 characters of a hash for any user ID.
 - The privacy notice explains what is kept and how "Berhenti" deletes the user's profile and links.
 
 ---
@@ -705,7 +713,7 @@ _Extra section: covers what happens when things go wrong._
 | Mechanism            | Detail                                                                                                                                                                                                                                                                                          |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Duplicate protection | FIFO deduplication by message ID, plus a `DEDUP#` marker in DynamoDB                                                                                                                                                                                                                            |
-| Retries              | Delivery is **at-most-once** (D-18): the worker marks each message id as seen before acting, logs any failure as `worker.error` (CloudWatch alarm), and does not retry, so a senior never receives the same verdict twice. The dead-letter queues catch messages the worker cannot read at all. |
+| Retries              | Delivery is **at-most-once** (D-18): the worker marks each message id as seen before acting, logs any failure as `worker.error` (CloudWatch alarm), and does not retry, so a senior never receives the same verdict twice. The dead-letter queues only catch messages whose Lambda run crashed or timed out 3 times. |
 | Timeouts             | Worker timeout 30 seconds. The queue's visibility timeout is longer (for example 60 seconds), so an event isn't picked up twice.                                                                                                                                                                |
 | Safe timers          | Every timer re-reads the current state before acting                                                                                                                                                                                                                                            |
 | Batch size           | Worker processes 1 event at a time, so one bad event can't block others                                                                                                                                                                                                                         |
@@ -717,8 +725,7 @@ _Extra section: covers what happens when things go wrong._
 | QR can't be decoded                   | Bank/police/court STOP still works. Other claims get VERIFY with "couldn't read".   |
 | Child alert can't be sent             | The parent already has their STOP message                                           |
 | Second contact not set up             | The chain ends after the first contact, and the parent is reminded to call the bank |
-| WhatsApp is blocked or approval fails | This happened. The same logic runs on Telegram (D-20).                              |
-| DynamoDB error                        | Event is retried, then goes to the dead-letter queue, and an alarm fires            |
+| DynamoDB error                        | The worker logs `worker.error` and the alarm fires. The event is not retried (D-18). |
 
 ---
 
@@ -732,7 +739,7 @@ _Extra section: how we prove it works before the demo._
 | ----------------- | --------------------------------------------------------------------------------------------- |
 | `emv.py`          | Valid payloads, cut-off payloads, wrong lengths, nested tag 26, checksum pass and fail        |
 | `classify.py`     | Every fixture gives the expected `kind`, `is_personal`, `static_dynamic` and `report_key`     |
-| `verdict.py`      | Every rule R1 to R5, and that `Level` has no `SAFE` member                                    |
+| `verdict.py`      | Every rule V-1 to V-5, and that `Level` has no `SAFE` member                                    |
 | `reports.py`      | Same QR always gives the same key, dynamic QRs give no key, duplicate reports are rejected    |
 | `escalation.py`   | All state moves, late timers, double taps                                                     |
 | Message catalogue | Every ID exists in both BM and EN, every variable is filled, and **no message claims safety** |
@@ -748,9 +755,8 @@ Made from the team's samples, with fake names and account digits and a recompute
 - 1 business dynamic DuitNow QR (with amount)
 - 1 Setel-style customer code
 - 1 URL QR, 1 blurry screenshot, 1 photo with no QR, 1 cut-off payload
-- 1 e-wallet receive-money QR (still to collect)
 
-### 11.3 End-to-end scenarios (also the demo script)
+### 11.3 End-to-end scenarios
 
 | #   | Scenario                                     | Expected result                                                    |
 | --- | -------------------------------------------- | ------------------------------------------------------------------ |
@@ -769,10 +775,6 @@ Made from the team's samples, with fake names and account digits and a recompute
 | S13 | Tap on an expired check                      | "Please forward the QR again"                                      |
 | S14 | Parent sends "Berhenti"                      | Profile and links removed, confirmation sent                       |
 
-### 11.4 User testing
-
-Before 19 Oct, if possible, ask 2 or 3 people aged 50+ to try the practice run with no help. Note where they hesitate. This is strong evidence for the Usability score.
-
 ---
 
 ## 12. Deployment, environments and monitoring
@@ -781,13 +783,12 @@ _Extra section: how the system gets to AWS and stays healthy._
 
 | Topic         | Plan                                                                                                                    |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Tooling       | AWS SAM. `sam build && sam deploy --config-env dev` (or `prod`).                                                        |
+| Tooling       | AWS SAM. `sam build`, then `sam deploy` with the `Stage` parameter set to `dev` or `prod` (see the README). |
 | Environments  | `dev` (each developer can deploy) and `prod` (the demo stack, deployed only from `main`)                                |
 | Configuration | Environment variables for table and queue names. Secrets in SSM: `/semak/{env}/tg_token`, `tg_secret`, `report_pepper`. |
 | Local testing | Core logic runs with pytest and an in-memory store, no AWS needed. `sam local invoke` for handlers.                     |
-| Rollback      | Redeploy the previous Git tag. Tag each demo-ready build (`demo-1`, `demo-2`...).                                       |
-| Alarms        | Dead-letter queue has any message, worker error rate above a threshold, worker duration close to timeout                |
-| Demo safety   | Record a backup demo video the day before. Keep a list of the pre-registered test phone numbers.                        |
+| Rollback      | Redeploy an earlier commit from `main`. |
+| Alarms        | One CloudWatch alarm fires when the worker logs `worker.error` at least once in 5 minutes. |
 
 ---
 
@@ -800,40 +801,30 @@ _Extra section: how the system gets to AWS and stays healthy._
 | **A**               | Core engine             | `emv.py`, `decode.py`, `classify.py`, `verdict.py`, fixtures, their tests       |
 | **B**               | Platform and channels   | `template.yaml`, handlers, `telegram.py`, queues, secrets, deployment           |
 | **C**               | Flows and content       | `flows.py`, `escalation.py`, `reports.py`, `store.py`, `messages/*.yaml`        |
-| **D** (if 4 people) | Quality, demo and pitch | End-to-end tests, demo script and video, slides, keeping SRS and SDD up to date |
+| **D** (if 4 people) | Quality, demo and pitch | End-to-end tests, demo video, slides, keeping SRS and SDD up to date |
 
-With 3 people, A also takes the tests, C takes the demo script, and B takes the demo video.
+With 3 people, A also takes the tests, and B takes the demo video.
 
 ### 13.2 Repository layout
 
 ```
 semak-dulu/
 ├── template.yaml               # SAM: API, Lambdas, queues, table, permissions
+├── layer/requirements.txt      # Lambda layer: zxing-cpp, Pillow, PyYAML, httpx
 ├── src/
 │   ├── core/                   # pure logic, no network calls
 │   │   ├── emv.py  decode.py  classify.py  verdict.py
 │   │   ├── flows.py  escalation.py  reports.py
-│   │   └── messages.py  store.py
-│   ├── channels/               # base.py, telegram.py
-│   └── handlers/               # ingest.py, worker.py
-├── messages/                   # ms.yaml, en.yaml
+│   │   └── messages.py  store.py  types.py
+│   ├── channels/               # base.py, telegram.py, fake.py
+│   ├── handlers/               # ingest.py, worker.py, config.py
+│   └── messages/               # ms.yaml, en.yaml
+├── scripts/                    # build_layer, chat_sim, QR benchmarks
 ├── tests/
 │   ├── fixtures/               # fake QR payloads, checksum recomputed
-│   ├── test_emv.py  test_verdict.py  test_flows.py  test_messages.py
-│   └── e2e/
+│   └── test_*.py               # unit and flow tests
 └── docs/                       # SRS.md, SDD.md, diagrams/
 ```
-
-### 13.3 Timeline
-
-| When                        | Goal                                                                                                                                                                                                                                       |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Wed 14 Oct**              | Repo, SAM skeleton deployed, interfaces from section 4.2 committed. Everyone starts on their module against stubs.                                                                                                                         |
-| **Thu 15 Oct (end of day)** | **WhatsApp checkpoint:** receive a forwarded image, download it, reply with buttons. If this fails, Telegram becomes the main channel from Friday morning. **Result:** WhatsApp access was not ready, so Telegram became the only channel. |
-| Fri 16 to Sat 17 Oct        | Verdict engine, pending checks, question-first flow, pairing and consent. Scenarios S1 to S3 work end to end.                                                                                                                              |
-| Sun 18 Oct                  | Alerts, escalation, paid flow, reports                                                                                                                                                                                                     |
-| **Mon 19 Oct**              | **Feature freeze.** No new features after this.                                                                                                                                                                                            |
-| Mon 19 to Wed 21 Oct        | Testing with real QRs, BM review, demo video, slides, README, submission                                                                                                                                                                   |
 
 ---
 
@@ -851,14 +842,14 @@ _Links each SRS requirement to where it is designed and tested._
 | FR-06       | Classify: payment, URL, other, unreadable              | 5.2            | Fixture tests                    |
 | FR-07       | Extract payee name, type, amount, checksum             | 3.4, 3.5       | Fixture tests                    |
 | FR-08       | "Who asked you to pay?" buttons (3)                    | 6.3            | S1 to S5                         |
-| FR-09       | STOP rule, works without a report database             | 5.3 (R1, R2)   | S1 to S3                         |
+| FR-09       | STOP rule, works without a report database             | 5.3 (V-1, V-2) | S1 to S3                         |
 | FR-10       | Otherwise VERIFY, never "safe"                         | 1.7, 5.3       | No-SAFE test, safety phrase test |
 | FR-11       | Action first, one concrete step                        | 6.3, 6.5       | Message review                   |
 | FR-12       | Separate message for each failure case                 | 5.2, 6.4       | S2, S6, fixtures                 |
 | FR-13       | Already paid: bank, 997, then 999, then police report  | 5.4, 6.4       | S9                               |
 | FR-14       | Report a QR by tapping a reason                        | 5.5            | S11, S12                         |
 | FR-15       | Wording scales with evidence, never "penipu"           | 5.3            | S11                              |
-| FR-16       | One report per number per QR, reports never cause STOP | 5.5            | S11, unit test                   |
+| FR-16       | One report per user per QR, reports never cause STOP   | 5.5            | S11, unit test                   |
 | FR-17       | Semak Mule as a link only                              | 5.3            | Message review                   |
 | FR-18       | Alert only on STOP, action first                       | 5.4            | S1, S2                           |
 | FR-19       | Parent told the child has been informed                | 5.4            | S1                               |
@@ -873,22 +864,13 @@ _Links each SRS requirement to where it is designed and tested._
 
 ---
 
-## 15. Risks and open items
+## 15. Known limitations
 
-| #   | Item                                                | Why it matters                            | Action                                                                  | Owner    |
-| --- | --------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------- | -------- |
-| 1   | `[OPEN]` Must judges be able to try the bot live?   | Decides if Telegram is a real deliverable | Ask the organisers today                                                | D (or A) |
-| 2   | ~~Meta test-number limits and verification~~        | Closed: WhatsApp is not used (D-20)       |                                                                         | B        |
-| 3   | ~~Reply buttons limited to 3~~                      | Closed: Telegram allows 3 buttons         |                                                                         | B        |
-| 4   | ~~24-hour window for child alerts~~                 | Closed: Telegram has no such window       |                                                                         | B        |
-| 5   | E-wallet receive-money QR not yet tested            | MCC `0000` might not hold                 | Test one this week. Unknown patterns already get VERIFY.                | A        |
-| 6   | MCC `0000` rule rests on 3 samples                  | Courier STOP could misfire                | Collect more samples, keep R2 as the only rule using it                 | A        |
-| 7   | `[VERIFY]` Meaning of tag 26 sub-fields and tag 62  | Report key stability                      | Check PayNet's QR specification                                         | A        |
-| 8   | `[VERIFY]` "Officials never ask for payment by QR"  | Basis of R1                               | Find a bank or PDRM advisory to cite in the pitch                       | D        |
-| 9   | `[VERIFY]` 997 number and hours, Semak Mule access  | Wording in messages                       | Check before the demo                                                   | C        |
-| 10  | `[VERIFY]` zxing-cpp on Lambda, region availability | Build and speed                           | Smoke test on day 1                                                     | A, B     |
-| 11  | BM wording quality                                  | Judges and parents read exactly this text | Native-speaker review of both catalogues                                | C        |
-| 12  | Seniors may not forward the QR at all               | Limits real-world impact                  | State it in the pitch. Setup visit and practice run are the mitigation. | D        |
+| #   | Limitation                                  | Why it matters                                        | How the design handles it                         |
+| --- | ------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| 1   | E-wallet receive-money QRs were not tested  | MCC `0000` might not mean a personal account for them | Unknown patterns already get VERIFY               |
+| 2   | The MCC `0000` rule rests on 3 samples      | A courier STOP could misfire                          | V-2 is the only rule that uses it                 |
+| 3   | Seniors may not forward the QR at all       | Limits real-world impact                              | The setup visit and practice run build the habit  |
 
 ---
 
@@ -904,7 +886,7 @@ _Links each SRS requirement to where it is designed and tested._
 | D-06 | Reports never cause a STOP. Only static QRs can be reported.                                    | Protects innocent sellers. Dynamic QRs have no stable key.                                                                           |
 | D-07 | Child alert on STOP and on "paid"                                                               | Puts a human in the loop at the critical moment                                                                                      |
 | D-08 | Escalate after about 3 minutes, one tap stops it, cap of two contacts, second contact optional  | Fast help without alert fatigue                                                                                                      |
-| D-09 | Channel-agnostic core. WhatsApp target, Telegram fallback.                                      | Removes the biggest platform risk                                                                                                    |
+| D-09 | Channel-agnostic core                                                                           | The channel can change without touching the logic. It did (D-20).                                                                    |
 | D-10 | No AI model in the verdict                                                                      | Same answer every time, easy to explain                                                                                              |
 | D-11 | BM by default, English selectable                                                               | Hackathon requirement and the users' language                                                                                        |
 | D-12 | FIFO queue per user, plus a timers queue. Image never stored.                                   | Correct ordering without locks. Privacy.                                                                                             |
