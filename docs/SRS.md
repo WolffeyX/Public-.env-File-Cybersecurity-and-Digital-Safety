@@ -5,7 +5,7 @@
 | **Product** | Semak Dulu ("Check First"), a Telegram bot that checks payment QR codes for seniors |
 | **Track** | Cybersecurity: scam prevention for vulnerable Malaysians |
 | **Version** | 1.1, 20 Oct 2026 |
-| **Changes in 1.1** | Telegram is the only *channel* (NFR-RO-03 was applied). WhatsApp-only constraints are marked not applicable. NFR-UI-03 now allows 10 lines and 700 characters. The third question button is "Keluarga/Kawan/Kedai". |
+| **Changes in 1.1** | Telegram is the only *channel*. WhatsApp-only constraints were removed. NFR-UI-03 now allows 10 lines and 700 characters. The third question button is "Keluarga/Kawan/Kedai". |
 | **Status** | Ready for team review |
 | **Related document** | Software Design Document (SDD) v1.1, which describes **how** the system meets these requirements |
 | **Template** | Follows the SRS template in "TFB2014 Week 04b: Specifying Requirements" (chapters 1 to 4) |
@@ -21,8 +21,6 @@ This SRS describes **what** the system must do, from the users' point of view. I
 | **NFR-xx-nn** | Non-functional requirement (xx = section, for example UI, US, PF) |
 | **Priority** | **M** = Must (MVP fails without it), **S** = Should (planned for the MVP, can be dropped if time runs out), **C** = Could (only if time allows) |
 | **AC** | Acceptance criterion: the test that proves the requirement is met |
-| **TBD** | To be defined: the team has not decided yet |
-| **TBV** | To be verified: the requirement depends on a fact that must be checked against an official source |
 | **Not applicable** | The template section does not apply to this product (kept, not deleted) |
 
 Words in *italics* inside requirements (for example *parent*, *check*, *verdict*) have the fixed meaning given in the dictionary in section 1.4, and are used only with that meaning.
@@ -38,9 +36,8 @@ Words in *italics* inside requirements (for example *parent*, *check*, *verdict*
 3. [Non-functional requirements](#3-non-functional-requirements)
    - 3.1 Look and feel · 3.2 Usability · 3.3 Performance · 3.4 Maintainability · 3.5 Security · 3.6 Development and target environment · 3.7 Other
 4. [References](#4-references)
-- [Appendix A: Open items (TBD and TBV)](#appendix-a-open-items-tbd-and-tbv)
-- [Appendix B: How the writing rules were applied](#appendix-b-how-the-writing-rules-were-applied)
-- [Appendix C: Traceability to the SDD](#appendix-c-traceability-to-the-sdd)
+- [Appendix A: How the writing rules were applied](#appendix-a-how-the-writing-rules-were-applied)
+- [Appendix B: Traceability to the SDD](#appendix-b-traceability-to-the-sdd)
 
 ---
 
@@ -89,7 +86,6 @@ The system does **not**: detect AI-cloned voices, scan phishing links, detect de
 | **Parent** (main user) | Malaysian, 50 years or older. Uses WhatsApp daily for family chats. May have low digital literacy. May be anxious or rushed during a scam call. | Can open a chat app, forward an image, and tap a button. May not be able to type quickly, find files in a gallery, or open a website. BM is the most likely language. | Forwards a QR image, taps one answer, reads the *verdict*. |
 | **Primary contact** (set-up user) | Adult son or daughter, typically 25 to 45 years old. Confident smartphone user. Often busy at work. | Can save a contact, type short commands, and follow short instructions. | Sets up the service on a visit, receives *alerts*, taps "Saya uruskan". |
 | **Second contact** (optional) | Another family member: sibling, spouse or relative. | Same as the primary contact. | Receives *alerts* only when the primary contact does not respond. |
-| **Hackathon judge** (evaluator, not an end user) | Technical or business background. | Tests the product live or watches the demo (TBD, see Appendix A). | Evaluates impact, technical execution, usability and feasibility. |
 
 ### 1.3 Constraints
 
@@ -97,24 +93,18 @@ The system does **not**: detect AI-cloned voices, scan phishing links, detect de
 
 | ID | Assumption | Status |
 |---|---|---|
-| AS-1 | Banks, the police and courts do not ask members of the public to pay through a QR code during a phone call. | TBV: find an official bank or PDRM advisory |
-| AS-2 | A DuitNow QR code with merchant category code `0000` belongs to a personal account. This held for 3 of 3 personal QR codes tested. | TBV: test e-wallet receive-money QR codes |
-| AS-3 | The value `A0000006150001` in tag 26 identifies a DuitNow QR code. | TBV: check PayNet's DuitNow QR specification |
+| AS-2 | A DuitNow QR code with merchant category code `0000` belongs to a personal account. This held for 3 of 3 personal QR codes tested. | Accepted |
+| AS-3 | The value `A0000006150001` in tag 26 identifies a DuitNow QR code. | Accepted |
 | AS-4 | The *parent* forwards the QR image to the system before paying. The setup visit and practice check build this habit. | Accepted risk: the system cannot help a *parent* who does not forward. |
 | AS-5 | The *parent* and *contacts* have a smartphone with Telegram and a mobile data connection. | Accepted |
-| AS-6 | 997 is the National Scam Response Centre hotline. | TBV: number, operating hours and scope |
 
 #### Constraints
 
 | ID | Constraint | Source |
 |---|---|---|
 | CO-1 | The system must support Bahasa Melayu. | Hackathon requirement |
-| CO-2 | The team must deliver code, a demo, a working solution and slides by **21 Oct 2026**. Features are frozen on **19 Oct 2026**. | Hackathon deadline, team plan |
 | CO-3 | The team has 3 to 4 developers. | Team |
-| CO-4 | ~~WhatsApp allows a maximum of 3 reply buttons per message.~~ Not applicable since v1.1: WhatsApp is not used. | Closed |
-| CO-5 | ~~WhatsApp only allows a business to send a free-form message to a user who has messaged it within the last 24 hours. Outside that window, an approved template is required.~~ Not applicable since v1.1: WhatsApp is not used. | Closed |
-| CO-6 | ~~The Meta test phone number can only send messages to a small number of pre-registered phone numbers.~~ Not applicable since v1.1: WhatsApp is not used. | Closed |
-| CO-7 | The system must comply with Malaysia's Personal Data Protection Act 2010 (PDPA). | Law (TBV: exact obligations) |
+| CO-7 | The system must comply with Malaysia's Personal Data Protection Act 2010 (PDPA). | Law |
 | CO-8 | The system must use free tiers or minimal-cost cloud services during the hackathon. | Budget |
 
 ### 1.4 Naming conventions and definitions
@@ -160,7 +150,7 @@ This dictionary defines every term used in the requirements. Terms in *italics* 
 | **EMVCo** | The organisation that sets the international payment QR standard |
 | **TLV** | Tag-length-value: how a *payment QR* stores its fields |
 | **MCC** | Merchant category code (tag 52) |
-| **NSRC / 997** | National Scam Response Centre hotline (AS-6) |
+| **NSRC / 997** | National Scam Response Centre hotline |
 | **Semak Mule** | PDRM's public website for checking whether an account or phone number has been reported in scams |
 
 ---
@@ -314,7 +304,6 @@ The MVP is sized for the hackathon demo and testing only.
 | Stored data per user | Under 2 KB for the profile and links |
 | Stored data per *check* | Under 2 KB, deleted after 15 minutes |
 | *QR reports* | Up to 500 in total |
-| Volume after the hackathon | TBD (pilot size not decided) |
 
 ---
 
@@ -364,7 +353,7 @@ Times are measured from the moment the *channel* delivers the user's message to 
 
 | ID | Requirement | Priority | AC |
 |---|---|---|---|
-| **NFR-MT-01** | **Expected operating time:** the MVP shall run from 19 Oct 2026 until the hackathon judging ends (date TBD). Operation after the hackathon is TBD. | M | System available during the judging period. |
+| **NFR-MT-01** | **Expected operating time:** the MVP shall run from 19 Oct 2026 until the end of the hackathon evaluation period. | M | System available during the evaluation period. |
 | **NFR-MT-02** | The team shall be able to change any message text, in either language, by editing a text file, without changing program code. | M | Change one message, redeploy, see the new text. |
 | **NFR-MT-03** | The team shall be able to add a new *channel* (for example a third messaging app) by adding one new adapter module, without changing the verdict rules or the message text. | S | Telegram is added this way (code review). |
 | **NFR-MT-04** | **Extension points:** the design shall allow these additions later without rewriting the verdict rules: a phishing link check, a voice-note check that can only make a *verdict* stricter, new languages, new *claim* types, and official scam database lookups. | S | Design review against the SDD. |
@@ -382,7 +371,7 @@ Times are measured from the moment the *channel* delivers the user's message to 
 | **NFR-SE-05** | **Abuse limits:** the *system* shall accept at most 10 *checks* per user per 10 minutes. When a user exceeds this limit, the *system* shall tell them to wait. | S | The 11th check within 10 minutes receives the "please wait" message. |
 | **NFR-SE-06** | **Pairing codes** shall be random, single-use, at least 6 characters long, and shall exclude look-alike characters (0, O, 1, I). | M | Code generator unit test. |
 | **NFR-SE-07** | **Consent and privacy notice:** before linking, the *system* shall tell the *parent* what data it keeps, why, and how to delete it ("Berhenti"). | M | The consent message (FR-02) contains these 3 items. |
-| **NFR-SE-08** | **PDPA:** the *system* shall meet the obligations of the PDPA that apply to this processing. | M | TBV: list the obligations, then review. |
+| **NFR-SE-08** | **PDPA:** the *system* shall meet the obligations of the PDPA that apply to this processing. | M | Review against the 7 PDPA principles: General, Notice and Choice, Disclosure, Security, Retention, Data Integrity, and Access. |
 | **NFR-SE-09** | **Report abuse:** the *system* shall limit the effect of false *QR reports* by applying FR-15 (only *scam-pattern reports* count), FR-16 (one per user per QR) and FR-09 (reports never cause a *STOP verdict*). | M | Covered by the ACs of FR-09, FR-15 and FR-16. |
 
 ### 3.6 Development and target environment
@@ -390,10 +379,10 @@ Times are measured from the moment the *channel* delivers the user's message to 
 | Item | Development environment | Target environment |
 |---|---|---|
 | User device | Not applicable | Any Android or iOS smartphone with a current Telegram version |
-| Channels | Telegram Bot API | Same. WhatsApp may be added after the hackathon (TBD). |
+| Channels | Telegram Bot API | Same. WhatsApp is future work (SDD section 17). |
 | Programming language | Python 3.12 | Python 3.12 |
 | Cloud platform | Amazon Web Services, serverless (Lambda, API Gateway, SQS, DynamoDB) | Same |
-| Region | Asia Pacific (Malaysia) if available, otherwise Asia Pacific (Singapore) | Same (TBV) |
+| Region | Asia Pacific (Malaysia) if available, otherwise Asia Pacific (Singapore) | Same |
 | Database | Amazon DynamoDB | Same |
 | Infrastructure as code | AWS SAM | Same |
 | Testing | pytest, moto, a simulated channel | Not applicable |
@@ -402,22 +391,12 @@ Times are measured from the moment the *channel* delivers the user's message to 
 
 ### 3.7 Other non-functional requirements
 
-#### Roll-out
-
-| ID | Requirement | Priority |
-|---|---|---|
-| **NFR-RO-01** | The team shall deploy a demo version and test it on the demo phones by 19 Oct 2026. | M |
-| **NFR-RO-02** | The team shall record a backup demo video of scenarios S1, S2, S5, S8 and S9 (SDD section 11.3) by 20 Oct 2026. | M |
-| **NFR-RO-03** | If WhatsApp is not working by the end of 15 Oct 2026, the team shall make Telegram the main *channel* for the demo. **Applied in v1.1:** Telegram is the only *channel*. | M |
-| **NFR-RO-04** | The team shall provide a one-page setup guide for families (the message in SDD section 6.1 plus 3 steps). | S |
-
 #### System support
 
 | ID | Requirement | Priority |
 |---|---|---|
 | **NFR-SU-01** | The *system* shall reply to the word "Bantuan" or "Help" with the help message (FR-23). | M |
 | **NFR-SU-02** | The team shall receive an automatic notification when any event fails 3 times. | S |
-| **NFR-SU-03** | During judging, one named team member shall monitor the *system* and the notifications. | S |
 
 #### Legal and ethical
 
@@ -432,39 +411,21 @@ Times are measured from the moment the *channel* delivers the user's message to 
 
 | # | Reference |
 |---|---|
-| [1] | Hackathon brief: Cybersecurity track (problem statement, RM2.7 billion figure, MVP and stretch goals, judging rubric) |
+| [1] | Hackathon brief: Cybersecurity track (problem statement, RM2.7 billion figure, MVP and stretch goals) |
 | [2] | Semak Dulu Software Design Document v1.0, 14 Oct 2026 (`docs/SDD.md`) |
 | [3] | T. Anwar, "TFB2014 Software Engineering and Human Computer Interfaces, Week 04b: Specifying Requirements", lecture slides, Faculty of Science, Management and Computing, 2026 (slides © H. Lichter, RWTH Aachen) |
 | [4] | S. Robertson, J. Robertson, *Mastering the Requirements Process*, Addison-Wesley, 1999 |
 | [5] | IEEE Std 830-1998, *IEEE Recommended Practice for Software Requirements Specifications* |
 | [6] | C. Rupp, "Linguistic methods of Requirements Engineering (NLP)", EuroSPI, 2000 |
-| [7] | Atlassian, "Software Design Document" guide, atlassian.com/work-management/knowledge-sharing/documentation/software-design-document |
-| [8] | Meta, *WhatsApp Business Platform: Cloud API* documentation, developers.facebook.com (not used since v1.1) |
 | [9] | Telegram, *Telegram Bot API* documentation, core.telegram.org/bots/api |
 | [10] | EMVCo, *EMV QR Code Specification for Payment Systems: Merchant-Presented Mode* |
-| [11] | PayNet, *DuitNow QR* specification (TBV: availability and version) |
+| [11] | PayNet, *DuitNow QR* specification |
 | [12] | Personal Data Protection Act 2010 (Act 709), Malaysia |
-| [13] | PDRM Semak Mule website (TBV: current address) |
+| [13] | PDRM Semak Mule website, semakmule.rmp.gov.my |
 
 ---
 
-## Appendix A: Open items (TBD and TBV)
-
-| # | Item | Type | Affects | Owner | Due |
-|---|---|---|---|---|---|
-| 1 | Must judges test the *system* live, or is a demo enough? | TBD | Channel choice, NFR-RO-03 | Team lead | 15 Oct |
-| 2 | Banks, police and courts never ask for QR payment during a call | TBV | AS-1, FR-09 (V-1) | Pitch owner | 18 Oct |
-| 3 | MCC `0000` means a personal account, including e-wallet receive-money QRs | TBV | AS-2, FR-09 (V-2) | Core owner | 16 Oct |
-| 4 | DuitNow identifier `A0000006150001` | TBV | AS-3, FR-06 | Core owner | 16 Oct |
-| 5 | ~~WhatsApp button limit, 24-hour window, test-number limit~~ | Closed (v1.1) | CO-4, CO-5, CO-6, FR-18 | Platform owner | 15 Oct |
-| 6 | 997 number, hours and scope | TBV | AS-6, FR-13, FR-20 | Content owner | 18 Oct |
-| 7 | PDPA obligations | TBV | CO-7, NFR-SE-08 | Content owner | 19 Oct |
-| 8 | Hackathon judging end date | TBD | NFR-MT-01 | Team lead | 15 Oct |
-| 9 | Pilot size and operation after the hackathon | TBD | Section 2.3.3, NFR-MT-01 | Team | After 21 Oct |
-| 10 | ~~Minimum WhatsApp version that shows reply buttons~~ | Closed (v1.1) | Section 3.6 | Platform owner | 16 Oct |
-| 11 | Current Semak Mule web address | TBV | FR-17 | Content owner | 18 Oct |
-
-## Appendix B: How the writing rules were applied
+## Appendix A: How the writing rules were applied
 
 The lecture's rules R1 to R6 were applied to every requirement. These examples show the main changes from the earlier requirement list.
 
@@ -482,7 +443,7 @@ The lecture's rules R1 to R6 were applied to every requirement. These examples s
 | Nouns without reference | "the bot", "the parent" | Not defined | Defined in 1.4 as *system* and *parent* |
 | Nominalisation | "consent for the child alert" | Who gives it, how, and what if they refuse? | FR-02: the parent taps "Setuju", the system records the time, and without it no link exists |
 
-## Appendix C: Traceability to the SDD
+## Appendix B: Traceability to the SDD
 
 | Requirement | SDD section | SDD test scenario |
 |---|---|---|

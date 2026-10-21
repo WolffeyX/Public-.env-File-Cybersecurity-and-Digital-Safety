@@ -167,7 +167,7 @@ This shows who uses the system and what it connects to.
 | An AI model (LLM) decides the verdict | Answers can vary, are hard to explain, and could produce a "safe"-sounding reply. Fixed rules are safer here. |
 | Decode first, then ask the question | A failed decode (blurry photo) would block the STOP for the most important case. Asking first removes that risk. |
 | A relational database (RDS) | Needs a running server and more setup. Our data fits key lookups well. |
-| WhatsApp as the main channel | It was the first choice, because Malaysian seniors use WhatsApp far more. It was dropped for the MVP because WhatsApp Business access was not ready in time (NFR-RO-03, D-20). It stays a future option (section 17). |
+| WhatsApp as the main channel | It was the first choice, because Malaysian seniors use WhatsApp far more. It was dropped for the MVP because WhatsApp Business access was not ready in time (D-20). It stays a future option (section 17). |
 
 ### 2.6 Performance targets
 
@@ -917,7 +917,7 @@ semak-dulu/
 | D-17 | Decoding runs as a separate "decode" job on the FIFO queue, right after the question is sent | Guarantees the question reaches the parent before decoding starts, and the tap is still processed after the decode (same FIFO group) |
 | D-18 | At-most-once delivery in the worker | A duplicated verdict or alert confuses a senior more than a rare lost message, which the 2-minute reminder covers |
 | D-19 | Question buttons: "Bank/Polis/Mahkamah", "Kurier", "Keluarga/Kawan/Kedai" | Fit the 20-character limit (NFR-UI-02) |
-| D-20 | Telegram is the only channel for the MVP | WhatsApp Business access was not ready in time (NFR-RO-03). The core logic did not change. |
+| D-20 | Telegram is the only channel for the MVP | WhatsApp Business access was not ready in time. The core logic did not change. |
 
 ---
 
