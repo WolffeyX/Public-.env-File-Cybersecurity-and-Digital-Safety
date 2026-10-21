@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Semak Dulu - WhatsApp QR scam check bot (SDD section 2)
+Description: Semak Dulu - Telegram QR scam check bot (SDD section 2)
 
 # NO DOCKER NEEDED.
 # 1. Build the layer once:   scripts/build_layer.sh   (Windows: scripts\build_layer.ps1)
@@ -61,8 +61,6 @@ Resources:
         - SQSSendMessagePolicy: {QueueName: !GetAtt EventsQueue.QueueName}
         - SSMParameterReadPolicy: {ParameterName: !Sub "semak/${Stage}*"}
       Events:
-        WaGet:  {Type: HttpApi, Properties: {ApiId: !Ref HttpApi, Path: /wa, Method: GET}}
-        WaPost: {Type: HttpApi, Properties: {ApiId: !Ref HttpApi, Path: /wa, Method: POST}}
         TgPost: {Type: HttpApi, Properties: {ApiId: !Ref HttpApi, Path: /tg, Method: POST}}
 
   WorkerFunction:
@@ -174,9 +172,6 @@ Resources:
       TreatMissingData: notBreaching
 
 Outputs:
-  WebhookWhatsApp:
-    Description: Paste into Meta > WhatsApp > Configuration > Callback URL
-    Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/wa
   WebhookTelegram:
     Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/tg
   TableName:

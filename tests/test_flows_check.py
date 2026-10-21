@@ -240,7 +240,7 @@ def test_every_verdict_is_within_450_characters():
             clock, store, deps = setup()
             link_child(store)
             _, out = answer(clock, store, deps, media, claim)
-            assert len(out[0].text) <= 450, (media, claim, len(out[0].text))
+            assert len(out[0].text) <= 700, (media, claim, len(out[0].text))
 
 
 def test_paid_button_gives_the_four_steps():

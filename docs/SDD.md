@@ -2,11 +2,12 @@
 
 | | |
 |---|---|
-| **Product** | Semak Dulu ("Check First"), a WhatsApp bot that checks payment QR codes for seniors |
+| **Product** | Semak Dulu ("Check First"), a Telegram bot that checks payment QR codes for seniors |
 | **Track** | Cybersecurity: scam prevention for vulnerable Malaysians |
-| **Version** | 1.0 (draft), 14 Oct 2026 |
+| **Version** | 1.1, 20 Oct 2026 |
+| **Changes in 1.1** | Telegram is the only channel (D-20). WhatsApp-only assumptions, risks and interfaces are closed or removed. The build-plan chart was removed. |
 | **Status** | Ready for team review |
-| **Related document** | Software Requirements Specification (SRS) v1.0: FR-01 to FR-27, DR-01 to DR-09, NFR-xx-nn |
+| **Related document** | Software Requirements Specification (SRS) v1.1: FR-01 to FR-27, DR-01 to DR-09, NFR-xx-nn |
 | **Template** | Follows Atlassian's software design document structure (sections 1 to 8), plus extra sections the build needs (sections 9 to 17) |
 
 **How to read the tags in this document**
@@ -69,7 +70,7 @@ The senior believes the caller, so generic warnings like "don't send money to st
 
 ### 1.4 Product summary
 
-The parent forwards the suspicious QR image to the Semak Dulu bot on WhatsApp. The bot asks one question: **"Who asked you to pay?"** It then replies with one of two verdicts:
+The parent forwards the suspicious QR image to the Semak Dulu bot on Telegram. The bot asks one question: **"Who asked you to pay?"** It then replies with one of two verdicts:
 
 - 🛑 **STOP**: "Don't pay." The bot also alerts the adult child who set it up.
 - 🟡 **VERIFY**: "Not sure. Don't pay yet. Do this one thing first" (for example, call the person back on a number you already saved).
@@ -85,7 +86,7 @@ The parent forwards the suspicious QR image to the Semak Dulu bot on WhatsApp. T
 | Alert a family member quickly on a STOP | Deepfake image or video detection |
 | Let users report scam QRs, with protection against false reports | MCMC or Semak Mule database integration |
 | Work in Bahasa Melayu (default) and English | Languages other than BM and English |
-| Run on WhatsApp, with Telegram as a fallback | A web or mobile app |
+| Run on Telegram | A web or mobile app |
 
 ### 1.6 Key requirements (summary)
 
@@ -105,7 +106,7 @@ These rules guide every decision below. If a design choice breaks one, the choic
 1. **Never say "safe".** The code has only two verdict values, `STOP` and `VERIFY`. There is no `SAFE` value, so no bug can produce one.
 2. **Ask first, decode in the background.** The question goes out as soon as the image arrives. The most important STOP (bank, police or court) doesn't need the QR at all.
 3. **Fixed rules decide, not AI.** The verdict comes from simple rules, not a language model. The same input always gives the same answer, and each answer can be explained in one sentence.
-4. **The core logic doesn't know about WhatsApp.** One Python package holds all the logic. WhatsApp and Telegram are thin adapters, so switching channels is easy.
+4. **The core logic doesn't know about Telegram.** One Python package holds all the logic. The Telegram adapter is thin, so adding another channel later is easy.
 5. **Every message ends with an action** the parent can finish in under a minute.
 6. **Keep as little data as possible.** The image is never saved. Reports store scrambled (hashed) keys, not names or account numbers.
 
@@ -125,8 +126,8 @@ This shows who uses the system and what it connects to.
 
 **How a message moves through the system, in plain words:**
 
-1. WhatsApp (or Telegram) sends the parent's message to our web address (**API Gateway**).
-2. A small function (**Ingest Lambda**) checks the message is genuine, puts it in a queue, and replies "OK" straight away. WhatsApp expects a fast reply and resends the message if it doesn't get one.
+1. Telegram sends the parent's message to our web address (**API Gateway**).
+2. A small function (**Ingest Lambda**) checks the message is genuine, puts it in a queue, and replies "OK" straight away. Telegram expects a fast reply and resends the message if it doesn't get one.
 3. The queue (**SQS FIFO**) keeps each user's messages in order.
 4. The main function (**Worker Lambda**) does the real work: sends the question, then puts a "decode" job on the same FIFO queue, decodes the QR in that job, applies the rules when the parent taps, and sends the verdict and alerts (D-17).
 5. **DynamoDB** stores users, links between parent and child, pending checks, alerts and reports.
@@ -136,8 +137,8 @@ This shows who uses the system and what it connects to.
 
 | Component | What it does | Why it exists |
 |---|---|---|
-| API Gateway (HTTP API) | Public web address for webhooks (`/wa`, `/tg`) | WhatsApp and Telegram need a URL to send messages to |
-| Ingest Lambda | Checks the signature, converts the message to one standard format, puts it in the queue | Replies to WhatsApp in milliseconds, so slow work never causes resends |
+| API Gateway (HTTP API) | Public web address for the webhook (`/tg`) | Telegram needs a URL to send messages to |
+| Ingest Lambda | Checks the signature, converts the message to one standard format, puts it in the queue | Replies to Telegram in milliseconds, so slow work never causes resends |
 | SQS FIFO queue | Holds incoming events, in order, grouped by user | Stops two events for the same user being processed at once |
 | SQS standard queue (timers) | Holds delayed jobs (reminder at 2 min, escalation at 3 min) | FIFO queues can't delay single messages, standard queues can (up to 15 min) |
 | Dead-letter queue | Collects events that failed 3 times | Nothing is lost silently, and the team can inspect failures |
@@ -150,23 +151,23 @@ This shows who uses the system and what it connects to.
 
 | Pattern | Where | Why |
 |---|---|---|
-| **Queue-based processing** | Ingest → SQS → Worker | WhatsApp needs a fast "OK". Decoding an image can take a second or two. The queue separates the two. |
+| **Queue-based processing** | Ingest → SQS → Worker | Telegram needs a fast "OK". Decoding an image can take a second or two. The queue separates the two. |
 | **Per-user ordering** | FIFO `MessageGroupId = user_id` | The parent's tap is always processed after their image has been decoded. No locks or waiting code needed. |
-| **Ports and adapters** | `core/` vs `channels/` | The logic is tested without any network. WhatsApp can be swapped for Telegram with no logic changes. |
+| **Ports and adapters** | `core/` vs `channels/` | The logic is tested without any network. Another channel can be added with no logic changes. |
 | **State machine** | Child alert escalation | The alert's progress (sent, escalated, handled) is clear, testable, and safe against late or double events. |
 | **Single-table DynamoDB** | All data | One table to deploy and manage, and access patterns are simple key lookups. |
-| **Idempotent handlers** | Every event and timer | WhatsApp may send the same message twice. Each event is processed once only. |
+| **Idempotent handlers** | Every event and timer | Telegram may send the same message twice. Each event is processed once only. |
 
 ### 2.5 Alternatives we considered
 
 | Option | Why we didn't choose it |
 |---|---|
-| Web app or mobile app | Too many steps for a senior (open browser, find the site, upload, choose file). WhatsApp needs only "forward". |
-| One Lambda that does everything synchronously | A slow decode could make WhatsApp time out and resend, causing duplicate replies. |
+| Web app or mobile app | Too many steps for a senior (open browser, find the site, upload, choose file). A chat app needs only "forward". |
+| One Lambda that does everything synchronously | A slow decode could make Telegram time out and resend, causing duplicate replies. |
 | An AI model (LLM) decides the verdict | Answers can vary, are hard to explain, and could produce a "safe"-sounding reply. Fixed rules are safer here. |
 | Decode first, then ask the question | A failed decode (blurry photo) would block the STOP for the most important case. Asking first removes that risk. |
 | A relational database (RDS) | Needs a running server and more setup. Our data fits key lookups well. |
-| Telegram only | Malaysian seniors use WhatsApp far more. Telegram stays as the fallback and possible judge-testing channel. |
+| WhatsApp as the main channel | It was the first choice, because Malaysian seniors use WhatsApp far more. It was dropped for the MVP because WhatsApp Business access was not ready in time (NFR-RO-03, D-20). It stays a future option (section 17). |
 
 ### 2.6 Performance targets
 
@@ -186,11 +187,11 @@ These are targets to measure during testing, not guarantees.
 |---|---|---|
 | Language | Python 3.12 | The team's strongest language |
 | Compute | AWS Lambda | Both functions are zip packages. QR libraries are in one Lambda layer built by `scripts/build_layer.sh` (D-16). |
-| API | API Gateway HTTP API | Routes: `GET /wa` (WhatsApp verification), `POST /wa`, `POST /tg` |
+| API | API Gateway HTTP API | Route: `POST /tg` |
 | Queues | Amazon SQS | FIFO for events, standard for timers, plus a dead-letter queue |
 | Database | Amazon DynamoDB | On-demand billing, TTL enabled |
 | QR decoding | `zxing-cpp` + Pillow (image clean-up and retry). OpenCV removed (D-16). | Tested 14 Oct: layer 33 MB, decodes on Python 3.12 x86_64 |
-| Channels | WhatsApp Cloud API (target), Telegram Bot API (fallback) | |
+| Channels | Telegram Bot API | |
 | Secrets | AWS SSM Parameter Store (SecureString) | |
 | Infrastructure as code | AWS SAM | One `template.yaml`, deploy with `sam build && sam deploy` |
 | Testing | pytest, moto (fake AWS), a fake channel | |
@@ -296,8 +297,6 @@ The team decoded 5 real QR codes (3 different personal QRs from bank apps, 1 bus
 
 | Interface | Direction | What we use | Notes |
 |---|---|---|---|
-| WhatsApp Cloud API | In (webhook) | Text, image and button-reply events | Signed with `X-Hub-Signature-256` `[VERIFY]` |
-| WhatsApp Cloud API | Out | Send text, send reply buttons (max 3) `[VERIFY]`, download media | Media download is two steps: get URL, then download with token `[VERIFY]` |
 | Telegram Bot API | In (webhook) | Messages, photos, callback queries | Checked with the secret-token header |
 | Telegram Bot API | Out | `sendMessage` with inline keyboard, `getFile` | No 24-hour messaging rule |
 | AWS SSM | Out | Read secrets at cold start | Cached in memory |
@@ -309,19 +308,19 @@ These are fixed on day 1 so each person can build against them in parallel.
 ```python
 @dataclass
 class InboundEvent:
-    channel: str             # "wa" or "tg"
+    channel: str             # "tg" (or "sim" locally)
     user_id: str             # phone number (wa) or chat id (tg)
     msg_id: str              # used to skip duplicates
     kind: str                # "text" | "image" | "button"
     text: str | None
-    media_ref: str | None    # WhatsApp media id or Telegram file_id
+    media_ref: str | None    # Telegram file_id
     button_id: str | None    # see 4.3
     ts: int
 
 @dataclass
 class Button:
     id: str
-    label: str               # max 20 characters for WhatsApp [VERIFY]
+    label: str               # max 20 characters (NFR-UI-02)
 
 @dataclass
 class Outbound:
@@ -367,7 +366,7 @@ The worker calls `handle_event`, sends each returned message, and puts each time
 | Same message arrives twice | Second copy is skipped (FIFO dedupe and the dedupe marker) |
 | Media download fails | Retry once, then tell the parent "we couldn't open the picture, please send it again" |
 | Sending a reply fails | The worker raises an error, SQS retries the event, and after 3 failures it goes to the dead-letter queue |
-| Child alert can't be delivered (for example, outside WhatsApp's 24-hour window) | The parent's STOP has already been sent. The failure is logged and the escalation timer still runs. |
+| Child alert can't be delivered (for example, the contact blocked the bot) | The parent's STOP has already been sent. The failure is logged and the escalation timer still runs. |
 | Unknown text from a user | A short help message with the main action: "Forward the QR picture to me" |
 
 ---
@@ -387,7 +386,7 @@ The worker calls `handle_event`, sends each returned message, and puts each time
 | `core/flows.py` | Main entry point: setup, check, tap, ack, paid, report | `InboundEvent` | `list[Outbound]` | All of the above |
 | `core/messages.py` | Load message text, fill in variables | Message ID, language, values | Text | `messages/*.yaml` |
 | `core/store.py` | Read and write data | Domain objects | Domain objects | boto3 (production) |
-| `channels/whatsapp.py`, `telegram.py` | Talk to each messaging platform | HTTP | `InboundEvent`, sends | requests or httpx |
+| `channels/telegram.py` | Talks to Telegram | HTTP | `InboundEvent`, sends | requests or httpx |
 | `handlers/ingest.py` | Lambda: verify and queue | API Gateway event | SQS message | channels |
 | `handlers/worker.py` | Lambda: process and send | SQS message | Messages and timers | core, channels |
 
@@ -491,7 +490,7 @@ Every stage change is a **conditional update** in DynamoDB ("only move to SECOND
 
 ## 6. User interface design
 
-The "screens" of this product are WhatsApp messages. The design goal is that a 65-year-old with low digital literacy can complete a check without help.
+The "screens" of this product are Telegram messages. The design goal is that a 65-year-old with low digital literacy can complete a check without help.
 
 ### 6.1 Setup flow (done once, by the child, during a visit)
 
@@ -518,7 +517,7 @@ The child also saves the bot as a contact (for example "Semak Dulu"), pins the c
 │                                       │
 │ [ Bank/Polis/Mahkamah ]               │
 │ [ Kurier ]                            │
-│ [ Saudara/Kawan/Kedai ]               │
+│ [ Keluarga/Kawan/Kedai ]              │
 └──────────────────────────────────────┘
 ```
 
@@ -591,7 +590,7 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 | Rule | How we apply it |
 |---|---|
 | Action first | The first line of every verdict says what to do ("JANGAN BAYAR", "Tunggu dulu"). |
-| Short messages | At most 8 lines and 450 characters (SRS NFR-UI-03). One idea per line. |
+| Short messages | At most 10 lines and 700 characters (SRS NFR-UI-03). One idea per line. |
 | Tap, don't type | Every answer is a button. Typing is only needed for the pairing code. |
 | Familiar language | BM by default, everyday words, no "QR payload", "merchant" or "verify". |
 | Address them personally | Uses the name the child chose ("Mak", "Ayah"). |
@@ -611,9 +610,9 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 | A1 | Banks, police and courts never ask people to pay by QR over a call `[VERIFY]` | R1 needs rewording. Find an official advisory to cite. |
 | A2 | MCC `0000` means a personal DuitNow account (true for 3 of 3 bank-app samples) | Courier STOP could misfire. Only R2 uses it, and unknowns fall to VERIFY. |
 | A3 | `A0000006150001` identifies DuitNow `[VERIFY]` | DuitNow detection needs a different check. |
-| A4 | WhatsApp reply buttons are limited to 3 `[VERIFY]` | If more are allowed, nothing breaks. We designed for 3. |
-| A5 | The Meta test number can message a small set of registered phones `[VERIFY]` | Telegram becomes the main demo channel. |
-| A6 | Bot-started WhatsApp messages need the user to have messaged in the last 24 hours, or a template `[VERIFY]` | Child alert may not deliver. Stage the demo inside the window. |
+| A4 | ~~WhatsApp reply buttons are limited to 3~~ | Not applicable since v1.1: WhatsApp is not used. |
+| A5 | ~~The Meta test number can message a small set of registered phones~~ | Not applicable since v1.1: WhatsApp is not used. |
+| A6 | ~~Bot-started WhatsApp messages need the user to have messaged in the last 24 hours, or a template~~ | Not applicable since v1.1: WhatsApp is not used. |
 | A7 | 997 is the National Scam Response Centre number `[VERIFY]` hours and scope | Change the paid message. |
 | A8 | The parent will forward the QR (helped by the setup visit and practice run) | Admitted limit: the bot can't help a parent who never forwards. |
 
@@ -621,8 +620,7 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 
 | Dependency | Used for | Risk |
 |---|---|---|
-| WhatsApp Cloud API (Meta) | Main channel | Approval and test limits (risks 2 to 4) |
-| Telegram Bot API | Fallback channel | Low |
+| Telegram Bot API | Channel | Low |
 | AWS Lambda, API Gateway, SQS, DynamoDB, SSM, CloudWatch | Hosting | Low |
 | `zxing-cpp` | QR decoding | Packaging on Lambda `[VERIFY]` |
 | `Pillow` | Image clean-up | Low |
@@ -633,13 +631,13 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 
 - **Time:** build from 14 Oct, feature freeze 19 Oct, submit 21 Oct.
 - **Team:** 3 to 4 people.
-- **Cost:** expected to stay within AWS free-tier limits at hackathon volume `[VERIFY]`. WhatsApp test messages are free on the test number `[VERIFY]`.
+- **Cost:** expected to stay within AWS free-tier limits at hackathon volume `[VERIFY]`. The Telegram Bot API is free.
 - **Language:** BM required by the hackathon. English offered.
 
 ### 7.4 Compliance
 
 - **Malaysia's Personal Data Protection Act (PDPA):** we store phone numbers and a parent-child link, so the bot shows a short privacy notice at setup (what is kept, why, and how to delete it with "Berhenti") `[VERIFY]` exact obligations.
-- **Meta WhatsApp Business policies:** opt-in before messaging, no spam, templates for messages outside the 24-hour window `[VERIFY]`.
+- **Telegram:** a bot can only message people who started a chat with it, so every user opts in.
 - **Consent:** the parent must tap "Setuju" before any alert can be sent about them.
 
 ---
@@ -663,14 +661,13 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 | **CRC (checksum)** | Tag 63. Detects a damaged QR. It does **not** prove a QR is genuine. |
 | **Report key** | A scrambled ID for a QR's account, used to count reports without storing the account number |
 | **HMAC / pepper** | A way to scramble data with a secret key (the pepper), so it can't be reversed |
-| **Webhook** | A web address that WhatsApp or Telegram calls when a new message arrives |
+| **Webhook** | A web address that Telegram calls when a new message arrives |
 | **Lambda** | An AWS function that runs only when needed, with no server to manage |
 | **SQS / FIFO** | Amazon's message queue. FIFO = first in, first out, in order. |
 | **Dead-letter queue (DLQ)** | Where failed events go after several retries |
 | **DynamoDB / TTL** | Amazon's database. TTL (time to live) deletes items automatically after a set time. |
 | **SAM** | AWS Serverless Application Model, a tool to define and deploy the whole system from one file |
 | **Idempotent** | Doing the same thing twice has the same effect as doing it once |
-| **24-hour window** | WhatsApp's rule that a bot can freely message a user only within 24 hours of their last message |
 | **Semak Mule** | PDRM's public website for checking if an account or phone number has been reported |
 | **NSRC / 997** | National Scam Response Centre hotline `[VERIFY]` |
 
@@ -722,7 +719,7 @@ All user-facing text lives in `messages/ms.yaml` and `messages/en.yaml`. Code ne
 | QR can't be decoded | Bank/police/court STOP still works. Other claims get VERIFY with "couldn't read". |
 | Child alert can't be sent | The parent already has their STOP message |
 | Second contact not set up | The chain ends after the first contact, and the parent is reminded to call the bank |
-| WhatsApp is blocked or approval fails | Same logic runs on Telegram |
+| WhatsApp is blocked or approval fails | This happened. The same logic runs on Telegram (D-20). |
 | DynamoDB error | Event is retried, then goes to the dead-letter queue, and an alarm fires |
 
 ---
@@ -788,7 +785,7 @@ Before 19 Oct, if possible, ask 2 or 3 people aged 50+ to try the practice run w
 |---|---|
 | Tooling | AWS SAM. `sam build && sam deploy --config-env dev` (or `prod`). |
 | Environments | `dev` (each developer can deploy) and `prod` (the demo stack, deployed only from `main`) |
-| Configuration | Environment variables for table and queue names. Secrets in SSM: `/semak/{env}/wa_token`, `wa_app_secret`, `wa_verify_token`, `tg_token`, `tg_secret`, `report_pepper`. |
+| Configuration | Environment variables for table and queue names. Secrets in SSM: `/semak/{env}/tg_token`, `tg_secret`, `report_pepper`. |
 | Local testing | Core logic runs with pytest and an in-memory store, no AWS needed. `sam local invoke` for handlers. |
 | Rollback | Redeploy the previous Git tag. Tag each demo-ready build (`demo-1`, `demo-2`...). |
 | Alarms | Dead-letter queue has any message, worker error rate above a threshold, worker duration close to timeout |
@@ -803,7 +800,7 @@ Before 19 Oct, if possible, ask 2 or 3 people aged 50+ to try the practice run w
 | Owner | Area | Modules |
 |---|---|---|
 | **A** | Core engine | `emv.py`, `decode.py`, `classify.py`, `verdict.py`, fixtures, their tests |
-| **B** | Platform and channels | `template.yaml`, handlers, `whatsapp.py`, `telegram.py`, queues, secrets, deployment |
+| **B** | Platform and channels | `template.yaml`, handlers, `telegram.py`, queues, secrets, deployment |
 | **C** | Flows and content | `flows.py`, `escalation.py`, `reports.py`, `store.py`, `messages/*.yaml` |
 | **D** (if 4 people) | Quality, demo and pitch | End-to-end tests, demo script and video, slides, keeping SRS and SDD up to date |
 
@@ -819,7 +816,7 @@ semak-dulu/
 │   │   ├── emv.py  decode.py  classify.py  verdict.py
 │   │   ├── flows.py  escalation.py  reports.py
 │   │   └── messages.py  store.py
-│   ├── channels/               # base.py, whatsapp.py, telegram.py
+│   ├── channels/               # base.py, telegram.py
 │   └── handlers/               # ingest.py, worker.py
 ├── messages/                   # ms.yaml, en.yaml
 ├── tests/
@@ -831,12 +828,10 @@ semak-dulu/
 
 ### 13.3 Timeline
 
-![Build plan](diagrams/09-build-plan.png)
-
 | When | Goal |
 |---|---|
 | **Wed 14 Oct** | Repo, SAM skeleton deployed, interfaces from section 4.2 committed. Everyone starts on their module against stubs. |
-| **Thu 15 Oct (end of day)** | **WhatsApp checkpoint:** receive a forwarded image, download it, reply with buttons. If this fails, Telegram becomes the main channel from Friday morning. |
+| **Thu 15 Oct (end of day)** | **WhatsApp checkpoint:** receive a forwarded image, download it, reply with buttons. If this fails, Telegram becomes the main channel from Friday morning. **Result:** WhatsApp access was not ready, so Telegram became the only channel. |
 | Fri 16 to Sat 17 Oct | Verdict engine, pending checks, question-first flow, pairing and consent. Scenarios S1 to S3 work end to end. |
 | Sun 18 Oct | Alerts, escalation, paid flow, reports |
 | **Mon 19 Oct** | **Feature freeze.** No new features after this. |
@@ -885,9 +880,9 @@ semak-dulu/
 | # | Item | Why it matters | Action | Owner |
 |---|---|---|---|---|
 | 1 | `[OPEN]` Must judges be able to try the bot live? | Decides if Telegram is a real deliverable | Ask the organisers today | D (or A) |
-| 2 | `[VERIFY]` Meta test-number limits and verification | Could block the WhatsApp demo | Read Meta docs on day 1. Checkpoint on Thu 15 Oct. | B |
-| 3 | `[VERIFY]` Reply buttons limited to 3 | Shapes the question screen | Check the interactive messages docs | B |
-| 4 | `[VERIFY]` 24-hour window for child alerts | Alert may not arrive | Stage the demo inside the window. Note templates as production work. | B |
+| 2 | ~~Meta test-number limits and verification~~ | Closed: WhatsApp is not used (D-20) | | B |
+| 3 | ~~Reply buttons limited to 3~~ | Closed: Telegram allows 3 buttons | | B |
+| 4 | ~~24-hour window for child alerts~~ | Closed: Telegram has no such window | | B |
 | 5 | E-wallet receive-money QR not yet tested | MCC `0000` might not hold | Test one this week. Unknown patterns already get VERIFY. | A |
 | 6 | MCC `0000` rule rests on 3 samples | Courier STOP could misfire | Collect more samples, keep R2 as the only rule using it | A |
 | 7 | `[VERIFY]` Meaning of tag 26 sub-fields and tag 62 | Report key stability | Check PayNet's QR specification | A |
@@ -903,7 +898,7 @@ semak-dulu/
 
 | ID | Decision | Reason |
 |---|---|---|
-| D-01 | One use case: check before you pay, on WhatsApp | One feature done well beats four half-done |
+| D-01 | One use case: check before you pay, in a chat app | One feature done well beats four half-done |
 | D-02 | MVP is QR check. Voice, URL and deepfake are not in the MVP. | They can't change what the parent should do, or they dilute the demo |
 | D-03 | No "safe" verdict, enforced in code and tests | A false "safe" is the worst failure |
 | D-04 | Ask the question first, decode in the background | A failed decode must not block the most important STOP |
@@ -916,12 +911,13 @@ semak-dulu/
 | D-11 | BM by default, English selectable | Hackathon requirement and the users' language |
 | D-12 | FIFO queue per user, plus a timers queue. Image never stored. | Correct ordering without locks. Privacy. |
 | D-13 | AWS SAM, Python 3.12, Markdown docs in the repo | Fits the team's skills |
-| D-14 | Three question buttons, not five | Relative/friend and seller lead to the same verdict, and WhatsApp allows 3 buttons |
+| D-14 | Three question buttons, not five | Relative/friend and seller lead to the same verdict, and three buttons are easy to read |
 | D-15 | Post-payment advice: bank first, then 997, then 999 if in danger | 997 can act on the bank side. 999 is for emergencies. |
 | D-16 | No Docker: zip functions + one Lambda layer (zxing-cpp, Pillow, PyYAML, httpx), OpenCV dropped | The team has no Docker experience. Layer tested at 33 MB, decodes on Python 3.12, `sam build` works without Docker. |
 | D-17 | Decoding runs as a separate "decode" job on the FIFO queue, right after the question is sent | Guarantees the question reaches the parent before decoding starts, and the tap is still processed after the decode (same FIFO group) |
 | D-18 | At-most-once delivery in the worker | A duplicated verdict or alert confuses a senior more than a rare lost message, which the 2-minute reminder covers |
-| D-19 | Question buttons: "Bank/Polis/Mahkamah", "Kurier", "Saudara/Kawan/Kedai" | Fit WhatsApp's 20-character limit (TBV) |
+| D-19 | Question buttons: "Bank/Polis/Mahkamah", "Kurier", "Keluarga/Kawan/Kedai" | Fit the 20-character limit (NFR-UI-02) |
+| D-20 | Telegram is the only channel for the MVP | WhatsApp Business access was not ready in time (NFR-RO-03). The core logic did not change. |
 
 ---
 
@@ -932,7 +928,7 @@ semak-dulu/
 | Phishing URL check | Same forward-to-bot flow. First item after the MVP. |
 | Voice-note check | Only ever raises urgency, never lowers it. The family code word remains the main protection. |
 | More languages | Mandarin, Tamil and dialects for the setup and verdict messages |
-| WhatsApp message templates | Needed for alerts outside the 24-hour window in production |
+| WhatsApp channel | Most Malaysian seniors use WhatsApp. Needs a verified business account, and message templates for alerts outside WhatsApp's 24-hour window. |
 | Partner distribution | Banks, telcos, community groups (surau, senior clubs) |
 | Official data sources | Semak Mule or NSRC integration if an API becomes available |
 | Smarter report trust | Weight reports by reporter history, and add a review queue for disputes |

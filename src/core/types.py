@@ -84,7 +84,7 @@ class ReportReason(str, Enum):
 
 @dataclass
 class InboundEvent:
-    """One thing that happened, already converted from WhatsApp/Telegram format.
+    """One thing that happened, already converted from Telegram format.
 
     kind:
       "text"   - user typed text            -> text is set
@@ -93,13 +93,13 @@ class InboundEvent:
       "task"   - internal job from our own queues -> task and ref are set
                  task values: "decode", "reminder", "close_check", "escalate"
     """
-    channel: str                   # "wa" | "tg" | "sim" (local simulator)
+    channel: str                   # "tg" | "sim" (local simulator)
     user_id: str                   # "wa:60123456789"
     msg_id: str                    # used to skip duplicates
     kind: str
     ts: float
     text: str | None = None
-    media_ref: str | None = None   # WhatsApp media id or Telegram file_id
+    media_ref: str | None = None   # Telegram file_id
     button_id: str | None = None   # see "Button id format" below
     task: str | None = None
     ref: str | None = None         # check_id or alert_id for tasks
@@ -108,7 +108,7 @@ class InboundEvent:
 @dataclass
 class Button:
     id: str                        # "<action>:<value>:<ref>", max 256 chars
-    label: str                     # max 20 characters (WhatsApp limit, NFR-UI-02)
+    label: str                     # max 20 characters (NFR-UI-02)
 
 
 @dataclass
@@ -248,7 +248,7 @@ class Alert:
 
 class Channel(Protocol):
     """One messaging platform (Owner B). Implemented in channels/*.py."""
-    name: str                                            # "wa" | "tg"
+    name: str                                            # "tg"
 
     def verify(self, headers: dict, raw_body: bytes, query: dict) -> bool: ...
     def parse(self, raw_body: bytes) -> list[InboundEvent]: ...

@@ -4,14 +4,12 @@ flowchart LR
   Second["🧑 Second contact<br/>(optional)"]
   Scammer["☎️ Scammer<br/>(poses as bank, police,<br/>court, courier, friend)"]
   System["🛡️ Semak Dulu bot<br/>(QR check + alerts)"]
-  WA["WhatsApp<br/>Cloud API"]
   TG["Telegram<br/>Bot API"]
 
   Scammer -- "sends QR + asks for money" --> Parent
-  Parent -- "forwards QR, taps answers" --> WA
-  Child -- "registers, taps 'Saya uruskan'" --> WA
-  Second -- "accepts invite, taps ack" --> WA
-  WA <--> System
-  TG <-. "fallback channel" .-> System
-  System -- "STOP / VERIFY verdict" --> WA
-  System -- "alert on STOP" --> WA
+  Parent -- "forwards QR, taps answers" --> TG
+  Child -- "registers, taps 'Saya uruskan'" --> TG
+  Second -- "accepts invite, taps ack" --> TG
+  TG <--> System
+  System -- "STOP / VERIFY verdict" --> TG
+  System -- "alert on STOP" --> TG

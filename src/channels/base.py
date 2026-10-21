@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def split_user_id(user_id: str) -> tuple[str, str]:
-    """"wa:60123456789" -> ("wa", "60123456789")"""
+    """"tg:123456789" -> ("tg", "123456789")"""
     channel, _, raw = user_id.partition(":")
     return channel, raw
 

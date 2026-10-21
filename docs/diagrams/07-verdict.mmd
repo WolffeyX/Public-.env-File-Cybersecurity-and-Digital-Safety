@@ -2,7 +2,7 @@ flowchart TD
   S["Parent taps an answer"] --> A{"Which answer?"}
   A -- "Bank / Polis / Mahkamah" --> R1["🛑 STOP (R1)<br/>no decode needed"]
   A -- "Kurier" --> W2{"Decode result<br/>(always ready: same<br/>FIFO group)"}
-  A -- "Saudara/Kawan/Kedai" --> R5["🟡 VERIFY (R5)<br/>show payee name,<br/>call back + code word"]
+  A -- "Keluarga/Kawan/Kedai" --> R5["🟡 VERIFY (R5)<br/>show payee name;<br/>family: call back + code word,<br/>friend: call saved number,<br/>shop: match the name"]
   W2 -- "is_personal = True" --> R2["🛑 STOP (R2)<br/>'courier, but personal account'"]
   W2 -- "failed / no QR" --> R3["🟡 VERIFY (R3)<br/>'could not read QR'"]
   W2 -- "business or unknown" --> R4["🟡 VERIFY (R4)"]

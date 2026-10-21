@@ -1,14 +1,14 @@
-"""Image -> QR text (Owner A, Milestone 2). SDD section 5.2.
-
-Uses zxing-cpp + Pillow only (no OpenCV, no numpy), so it fits in a
-Lambda layer without Docker. Tested: reads 3-4 px/module JPEG
-screenshots, 12 degree rotation and low-contrast images.
-"""
+"""Image -> QR text (Owner A, Milestone 2). SDD section 5.2."""
 
 from __future__ import annotations
 
-MAX_BYTES = 5 * 1024 * 1024      # SRS 2.3.3
-MAX_SIDE = 2000                  # shrink bigger images before decoding
+from io import BytesIO
+
+import zxingcpp
+from PIL import Image, ImageOps, UnidentifiedImageError
+
+MAX_BYTES = 5 * 1024 * 1024
+MAX_SIDE = 2000
 
 
 class UnreadableImage(Exception):
@@ -16,13 +16,51 @@ class UnreadableImage(Exception):
 
 
 def decode_qr(image_bytes: bytes) -> str | None:
-    """Return the text of the first QR code found, or None if there is none.
+    """Return the first QR code's text, or None if no QR is found."""
+    if len(image_bytes) > MAX_BYTES:
+        raise UnreadableImage("Image exceeds the 5 MB limit.")
 
-    Steps (stop at the first success):
-      1. Reject > MAX_BYTES or bytes Pillow cannot open -> raise UnreadableImage
-      2. ImageOps.exif_transpose, convert("L"), shrink so the long side <= MAX_SIDE
-      3. zxingcpp.read_barcodes(img, formats=zxingcpp.BarcodeFormat.QRCode)
-      4. retry: upscale x2 (LANCZOS) + ImageOps.autocontrast
-    The image is never written to disk (DR-01).
-    """
-    raise NotImplementedError
+    try:
+        with Image.open(BytesIO(image_bytes)) as source:
+            image = ImageOps.exif_transpose(source)
+            image.load()
+    except (UnidentifiedImageError, OSError, ValueError) as exc:
+        raise UnreadableImage("Bytes are not a readable image.") from exc
+
+    image = image.convert("L")
+
+    width, height = image.size
+    longest_side = max(width, height)
+
+    if longest_side > MAX_SIDE:
+        scale = MAX_SIDE / longest_side
+        new_size = (
+            max(1, round(width * scale)),
+            max(1, round(height * scale)),
+        )
+        image = image.resize(new_size, Image.Resampling.LANCZOS)
+
+    results = zxingcpp.read_barcodes(
+        image,
+        formats=zxingcpp.BarcodeFormat.QRCode,
+    )
+    for result in results:
+        if result.text:
+            return result.text
+
+    # Retry with a larger, higher-contrast image.
+    retry = image.resize(
+        (image.width * 2, image.height * 2),
+        Image.Resampling.LANCZOS,
+    )
+    retry = ImageOps.autocontrast(retry)
+
+    results = zxingcpp.read_barcodes(
+        retry,
+        formats=zxingcpp.BarcodeFormat.QRCode,
+    )
+    for result in results:
+        if result.text:
+            return result.text
+
+    return None

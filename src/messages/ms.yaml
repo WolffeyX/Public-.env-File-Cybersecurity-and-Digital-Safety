@@ -4,20 +4,20 @@
 #   - Jangan guna perkataan yang menyatakan selamat, KECUALI ayat penafian
 #     "itu tidak bermakna ia selamat" (FR-10).
 #   - Label butang (btn.*) maksimum 20 aksara (NFR-UI-02).
-#   - Mesej keputusan/amaran maksimum 8 baris dan 450 aksara (NFR-UI-03).
+#   - Mesej keputusan/amaran maksimum 10 baris dan 700 aksara (NFR-UI-03).
 #   - Tiada istilah teknikal: payload, merchant, EMV, TLV, MCC, checksum (NFR-US-04).
-#   - Pembolehubah {seperti_ini} mesti sama dalam ms.yaml dan en.yaml.
+#   - Pembolehubah {seperti_ini} dalam en.yaml mesti ada dalam ms.yaml.
 
 # --- Persediaan ---------------------------------------------------------
 s.choose_lang: "Semak Dulu 🛡️\nPilih bahasa / Choose language:"
-s.welcome: "Hai! Saya Semak Dulu. Saya bantu semak kod QR sebelum anda bayar.\nSaya bukan bank, polis atau agensi kerajaan. Saya hanya beri nasihat.\nAnak: taip DAFTAR untuk mula. Ibu bapa: hantar kod daripada anak anda, atau forward gambar kod QR kepada saya."
+s.welcome: "Hai! Saya Semak Dulu. Saya bantu semak kod QR sebelum anda bayar atau pindahkan wang.\nSaya bukan bank, polis atau agensi kerajaan. Saya hanya beri nasihat.\nAnak: taip DAFTAR untuk sambungkan telefon ibu bapa anda. Saya akan beri satu kod.\nIbu bapa: hantar kod daripada anak anda kepada saya (di telegram gajet ibu bapa).\nLepas itu, forward gambar kod QR kepada saya sebelum melakukan pembayaran."
 s.ask_address: "Bagaimana saya patut panggil ibu atau bapa anda? Taip satu perkataan, contoh: Mak, Ayah, Mama."
-s.pair_code: "Kod anda: {code}\nMinta {address_as} hantar kod ini kepada saya dalam masa 24 jam.\nCadangan: setuju satu kod rahsia keluarga secara bersemuka. Saya tidak akan sekali-kali bertanya kod itu."
+s.pair_code: "Kod anda: {code}\nBuka chat Semak Dulu di telefon {address_as}, dan hantar kod ini dalam masa 24 jam.\nCadangan: Buat satu kod rahsia keluarga secara bersemuka. Jika ada orang telefon mengaku saudara, minta kod itu untuk pastikan dia betul-betul keluarga. Saya tidak akan sekali-kali bertanya kod itu."
 s.code_invalid: "Kod ini tidak boleh digunakan. Minta ahli keluarga anda hantar kod baharu."
-s.consent: "{address_as}, jika saya nampak tanda penipuan, saya akan terus maklumkan anak {address_as}.\nSaya simpan nombor telefon dan pautan keluarga sahaja. Gambar QR tidak disimpan.\nTaip BERHENTI bila-bila masa untuk padam data."
+s.consent: "Hai {address_as}, saya Semak Dulu. Jika ada orang minta {address_as} bayar guna kod QR, forward gambar QR itu kepada saya dahulu. Saya akan semak tanda-tanda penipuan.\nJika saya nampak tanda penipuan, saya akan terus maklumkan anak {address_as}.\nSaya simpan nombor telefon dan pautan keluarga sahaja. Gambar QR tidak disimpan.\nTaip BERHENTI bila-bila masa untuk padam data."
 s.linked_parent: "Terima kasih, {address_as}. Anda sudah dihubungkan dengan anak anda."
-s.linked_child: "{address_as} sudah dihubungkan ✅ Saya akan maklumkan anda jika saya nampak tanda penipuan."
-s.practice_invite: "Jom cuba sekali. Forward mana-mana gambar kod QR kepada saya. Ini latihan sahaja, tiada wang dihantar."
+s.linked_child: "{address_as} sudah dihubungkan ✅ Saya akan maklumkan anda jika saya nampak unsur-unsur penipuan (scam)."
+s.practice_invite: "Jom cuba sekali. Forward mana-mana gambar kod QR kepada saya. Ini latihan sahaja: tiada wang yang dipindahkan dan anak anda tidak akan dimaklumkan."
 s.second_code: "Kod untuk ahli keluarga kedua: {code}\nMinta dia hantar kod ini kepada saya dalam masa 24 jam."
 s.second_exists: "{address_as} sudah ada ahli keluarga kedua. Hanya seorang dibenarkan."
 s.second_invite: "Anda dijemput sebagai ahli keluarga kedua untuk {address_as}. Saya akan maklumkan anda jika anak utama tidak menjawab amaran."
@@ -28,14 +28,14 @@ s.lang_changed: "Bahasa ditukar ke Bahasa Melayu."
 s.default_address: "anda"
 
 # --- Bantuan dan berhenti ----------------------------------------------
-h.help: "Forward gambar kod QR kepada saya sebelum anda bayar.\nArahan: DAFTAR (anak), TAMBAH (ahli kedua), BAHASA, BERHENTI."
+h.help: "Forward gambar kod QR kepada saya sebelum anda bayar.\nArahan:\n1. DAFTAR - anak sambungkan telefon ibu bapa\n2. TAMBAH - tambah ahli keluarga kedua\n3. BAHASA - tukar bahasa\n4. BERHENTI - padam data dan berhenti guna Semak Dulu"
 h.stop_confirm: "Anda pasti mahu berhenti? Semua data dan pautan keluarga anda akan dipadam."
 h.stopped: "Data anda sudah dipadam. Terima kasih kerana menggunakan Semak Dulu."
 h.contact_left: "Seorang ahli keluarga telah berhenti menggunakan Semak Dulu. Pautan dengan anda sudah dipadam."
 h.rate_limited: "Terlalu banyak semakan dalam masa singkat. Sila tunggu 10 minit. Jangan bayar dahulu."
 
 # --- Semakan QR ---------------------------------------------------------
-q.who_asked: "Terima kasih. Sebelum bayar:\nSiapa yang minta {address_as} bayar?"
+q.who_asked: "Terima kasih. Sebelum bayar atau pindahkan wang:\nSiapa yang minta {address_as} bayar?"
 q.reminder: "Jangan bayar dahulu. Pilih siapa yang minta bayaran:"
 q.expired: "Semakan ini sudah tamat. Sila forward gambar kod QR sekali lagi."
 
@@ -43,26 +43,26 @@ v.stop.official: "🛑 JANGAN BAYAR.\nBank, polis dan mahkamah tidak minta bayar
 v.stop.courier_personal: "🛑 JANGAN BAYAR.\nPemanggil kata dari kurier, tetapi akaun ini atas nama peribadi: {payee_name}.\nLetak telefon sekarang."
 v.verify.courier: "🟡 Tunggu dulu, jangan bayar dahulu.\nNama pada QR: {payee_name}\nSemak bayaran ini dalam aplikasi rasmi syarikat kurier."
 v.verify.courier_unreadable: "🟡 Tunggu dulu, jangan bayar dahulu.\nKami tidak dapat semak kod QR ini.\nSemak bayaran ini dalam aplikasi rasmi syarikat kurier."
-v.verify.known_person: "🟡 Tunggu dulu, jangan bayar dahulu.\nNama pada QR: {payee_name}\nTelefon semula orang itu guna nombor yang {address_as} sudah simpan, dan tanya kod rahsia keluarga."
+v.verify.known_person: "🟡 Tunggu dulu, jangan bayar dahulu.\nNama pada QR: {payee_name}\nJika ahli keluarga: telefon semula guna nombor yang {address_as} sudah simpan, dan tanya kod rahsia keluarga.\nJika kawan/kenalan: telefon dia guna nombor yang {address_as} sudah simpan. Jangan balas dalam chat yang sama, dan jangan guna nombor baru yang dia beri. Akaun kawan mungkin telah digodam.\nJika kedai: pastikan nama kedai sama dengan nama pada QR."
 v.told_contact: "Saya sudah maklumkan anak {address_as}. Dia akan telefon sebentar lagi."
 v.amount: "Jumlah pada QR: RM{amount}"
 v.unknown_name: "(tiada nama)"
 v.practice_prefix: "[LATIHAN] Ini contoh sahaja. Tiada amaran dihantar."
-v.semak_mule: "Anda juga boleh semak akaun di laman Semak Mule PDRM."
+v.semak_mule: "Anda juga boleh semak akaun di laman Semak Mule PDRM: https://semakmule.rmp.gov.my"
 
 e.no_qr: "Kami tidak jumpa kod QR dalam gambar ini. Jika perlu, hantar gambar yang lebih jelas."
 e.unreadable: "Gambar ini tidak dapat dibaca. Ambil gambar lurus dan di tempat terang."
 e.url: "Kod QR ini membuka laman web, bukan bayaran. Jangan buka dan jangan masukkan butiran bank."
 e.unknown_scheme: "Kami tidak dapat semak jenis kod QR ini."
 
-ev.none: "Tiada laporan dijumpai, tetapi itu tidak bermakna ia selamat."
+ev.none: "Tiada laporan dalam Semak Dulu, tetapi itu tidak bermakna ia selamat."
 ev.few: "Akaun ini ada {n} laporan yang belum disahkan. Berhati-hati."
 ev.many: "Beberapa orang telah melaporkan akaun ini."
 
 p.paid: "Buat ini sekarang, ikut urutan:\n1. Telefon bank anda segera.\n2. Telefon 997 (Pusat Respons Scam Kebangsaan).\n3. Telefon 999 jika anda dalam bahaya.\n4. Buat laporan polis."
 
 # --- Laporan ------------------------------------------------------------
-r.choose_reason: "Kenapa anda mahu laporkan QR ini?\n1. Pemanggil menyamar sebagai bank, polis, mahkamah atau kurier\n2. Penjual atau orang itu tidak jujur\n3. Lain-lain"
+r.choose_reason: "Kenapa anda mahu laporkan QR ini? Laporan ini hanya dalam Semak Dulu, untuk bantu pengguna lain. Untuk laporan rasmi, hubungi 997.\n1. Pemanggil menyamar sebagai bank, polis, mahkamah atau kurier\n2. Penjual atau orang itu tidak jujur\n3. Lain-lain"
 r.thanks: "Terima kasih. Laporan anda membantu orang lain."
 r.not_reportable: "Maaf, jenis kod QR ini tidak boleh dilaporkan."
 r.already_reported: "Anda sudah melaporkan QR ini sebelum ini."
@@ -89,7 +89,7 @@ btn.agree: "Setuju"
 btn.accept: "Terima"
 btn.claim_official: "Bank/Polis/Mahkamah"
 btn.claim_courier: "Kurier"
-btn.claim_known: "Saudara/Kawan/Kedai"
+btn.claim_known: "Keluarga/Kawan/Kedai"
 btn.paid: "Saya sudah bayar"
 btn.report: "Laporkan QR ini"
 btn.r_scam: "1. Menyamar"

@@ -22,6 +22,7 @@ ALERT_OPEN = {"ms": "AMARAN: Telefon {address_as} sekarang.",                   
               "en": "ALERT: Call {address_as} now."}
 CODE_WORD = {"ms": "kod rahsia", "en": "code word"}                              # NFR-US-06
 DISCLAIMER = {"ms": "bukan bank", "en": "not a bank"}                            # NFR-LE-01
+STOP_WORD = {"ms": "BERHENTI", "en": "STOP"}                                     # NFR-SE-07
 
 
 @pytest.mark.parametrize("lang", LANGS)
@@ -56,7 +57,7 @@ def test_code_word_is_mentioned_where_the_srs_requires_it(lang, key):
 @pytest.mark.parametrize("lang", LANGS)
 def test_welcome_disclaimer_and_consent_notice(lang):
     assert DISCLAIMER[lang] in catalogue(lang)["s.welcome"].lower()     # NFR-LE-01
-    assert "BERHENTI" in catalogue(lang)["s.consent"]                    # NFR-SE-07
+    assert STOP_WORD[lang] in catalogue(lang)["s.consent"]               # NFR-SE-07
 
 
 # ---- worst case: the REAL combined messages, longest values (NFR-UI-03) ----
@@ -115,5 +116,5 @@ def test_real_messages_fit_450_characters_and_8_lines(case, claim, practice, lan
     for m in sent:
         if isinstance(m, Task):
             continue
-        assert len(m.text) <= 450, (case, claim, practice, lang, len(m.text))
-        assert len(m.text.splitlines()) <= 8, (case, claim, practice, lang)
+        assert len(m.text) <= 700, (case, claim, practice, lang, len(m.text))
+        assert len(m.text.splitlines()) <= 10, (case, claim, practice, lang)

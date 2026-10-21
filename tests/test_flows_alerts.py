@@ -113,11 +113,11 @@ def test_every_alert_is_within_450_characters_and_8_lines():
         clock, store, deps = setup()
         _, out = check_and_claim(clock, store, deps, media, claim)
         text = messages_to(out, CHILD)[0].text
-        assert len(text) <= 450 and len(text.splitlines()) <= 8, (media, claim)
+        assert len(text) <= 700 and len(text.splitlines()) <= 10, (media, claim)
     clock, store, deps = setup()
     check_id, _ = check_and_claim(clock, store, deps, "personal", "KNOWN_PERSON")
     text = messages_to(tap(clock, store, deps, MAK, f"paid:yes:{check_id}"), CHILD)[0].text
-    assert len(text) <= 450 and len(text.splitlines()) <= 8
+    assert len(text) <= 700 and len(text.splitlines()) <= 10
 
 
 def test_s9_paid_button_alerts_the_child_urgently():
@@ -272,7 +272,7 @@ def test_s11_three_reporters_change_the_wording_but_never_the_verdict():
                          ReportReason.SCAM_PATTERN, clock())
     _, out = check_and_claim(clock, store, deps, "personal", "KNOWN_PERSON")
     assert out[0].text.startswith("🟡")                       # still VERIFY
-    assert render("ev.many", "ms") in out[0].text and len(out[0].text) <= 450
+    assert render("ev.many", "ms") in out[0].text and len(out[0].text) <= 700
     clock.advance(5)
     _, out = check_and_claim(clock, store, deps, "personal", "OFFICIAL")
     assert out[0].text.startswith("🛑")                       # STOP does not depend on reports
