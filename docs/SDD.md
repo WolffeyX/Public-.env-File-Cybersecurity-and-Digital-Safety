@@ -823,7 +823,7 @@ semak-dulu/
 │   ├── fixtures/               # fake QR payloads, checksum recomputed
 │   ├── test_emv.py  test_verdict.py  test_flows.py  test_messages.py
 │   └── e2e/
-└── docs/                       # SRS.md, SDD.md, diagrams/, demo-script.md
+└── docs/                       # SRS.md, SDD.md, diagrams/
 ```
 
 ### 13.3 Timeline
